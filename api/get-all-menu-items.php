@@ -19,7 +19,7 @@ try {
     $db = Database::getConnection();
     
     // Fetch all items sorted by category and name
-    $query = "SELECT id, name, description, price, category, image_url, is_available 
+    $query = "SELECT id, name, description, price, cost_price, category, image_url, is_available 
               FROM menu_items 
               ORDER BY category ASC, name ASC";
     
@@ -30,6 +30,7 @@ try {
     foreach ($items as &$item) {
         $item['id'] = (int)$item['id'];
         $item['price'] = (float)$item['price'];
+        $item['cost_price'] = (float)($item['cost_price'] ?? 0.00);
         $item['is_available'] = (int)$item['is_available'];
     }
     unset($item);

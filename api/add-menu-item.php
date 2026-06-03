@@ -37,6 +37,7 @@ if (strpos($contentType, 'application/json') !== false) {
     $input = sanitizeInput($input);
     $name = isset($input['name']) ? trim($input['name']) : null;
     $price = isset($input['price']) ? (float)$input['price'] : null;
+    $cost_price = isset($input['cost_price']) ? (float)$input['cost_price'] : null;
     $category = isset($input['category']) ? trim($input['category']) : null;
     $description = isset($input['description']) ? trim($input['description']) : null;
     $imageUrl = isset($input['image_url']) ? trim($input['image_url']) : null;
@@ -45,6 +46,7 @@ if (strpos($contentType, 'application/json') !== false) {
     $_POST = sanitizeInput($_POST);
     $name = isset($_POST['name']) ? trim($_POST['name']) : null;
     $price = isset($_POST['price']) ? (float)$_POST['price'] : null;
+    $cost_price = isset($_POST['cost_price']) ? (float)$_POST['cost_price'] : null;
     $category = isset($_POST['category']) ? trim($_POST['category']) : null;
     $description = isset($_POST['description']) ? trim($_POST['description']) : null;
     $imageUrl = isset($_POST['image_url']) ? trim($_POST['image_url']) : null;
@@ -110,20 +112,26 @@ $categoryMapping = [
 $mappedCategory = isset($categoryMapping[$category]) ? $categoryMapping[$category] : 'appetizer';
 
 try {
+    // Default cost_price to 50% of price if not provided
+    if ($cost_price === null || $cost_price < 0) {
+        $cost_price = $price * 0.5;
+    }
+
     $db = Database::getConnection();
     
     $stmt = $db->prepare("
-        INSERT INTO menu_items (name, description, price, category, image_url, is_available) 
-        VALUES (?, ?, ?, ?, ?, 1)
+        INSERT INTO menu_items (name, description, price, cost_price, category, image_url, is_available) 
+        VALUES (?, ?, ?, ?, ?, ?, 1)
     ");
     
-    $stmt->execute([$name, $description, $price, $mappedCategory, $imageUrl]);
+    $stmt->execute([$name, $description, $price, $cost_price, $mappedCategory, $imageUrl]);
     $itemId = (int)$db->lastInsertId();
     
     sendJsonResponse(true, "Menu item added successfully.", [
         'id' => $itemId,
         'name' => $name,
         'price' => $price,
+        'cost_price' => $cost_price,
         'category' => $mappedCategory,
         'image_url' => $imageUrl,
         'is_available' => 1

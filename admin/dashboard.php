@@ -52,6 +52,9 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                 <a href="manage-riders.php" class="sidebar-link">
                     <i class="fa-solid fa-motorcycle"></i> Delivery Riders
                 </a>
+                <a href="reports.php" class="sidebar-link">
+                    <i class="fa-solid fa-chart-line"></i> Business Reports
+                </a>
             </nav>
 
             <div class="sidebar-footer" style="display: flex; flex-direction: column; gap: 0.5rem; padding: 1rem 1.5rem;">

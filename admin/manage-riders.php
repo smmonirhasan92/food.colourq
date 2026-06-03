@@ -34,7 +34,7 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
         <aside class="admin-sidebar">
             <div class="sidebar-header">
                 <a href="dashboard.php" class="brand-logo">
-                    Food ColourQ<span class="brand-dot"></span>
+                    Crispy Chicken<span class="brand-dot"></span>
                 </a>
             </div>
 
@@ -50,6 +50,9 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                 </a>
                 <a href="manage-riders.php" class="sidebar-link active">
                     <i class="fa-solid fa-motorcycle"></i> Delivery Riders
+                </a>
+                <a href="reports.php" class="sidebar-link">
+                    <i class="fa-solid fa-chart-line"></i> Business Reports
                 </a>
             </nav>
 

@@ -69,27 +69,27 @@
                 </div>
                 <div class="burger-canvas-wrapper" id="burger-assembly-canvas" style="display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative;">
                     <!-- Layer 1: Top Bun -->
-                    <div class="burger-layer layer-top-bun" style="transform: translateY(-35px); opacity: 1; display: flex; justify-content: center; width: 100%;">
+                    <div class="burger-layer layer-top-bun" style="transform: translateY(-380px); opacity: 1; display: flex; justify-content: center; width: 100%;">
                         <img src="../images/burger_assembly/top_bun.png?v=1.0.4" alt="Top Bun" style="width: 260px; height: auto; filter: drop-shadow(0px 8px 15px rgba(0,0,0,0.15)); object-fit: contain;">
                     </div>
                     <!-- Layer 2: Tomato Slices -->
-                    <div class="burger-layer layer-tomato" style="transform: translateX(-20px) rotate(-5deg); opacity: 1; display: flex; justify-content: center; width: 100%;">
+                    <div class="burger-layer layer-tomato" style="transform: translateY(-240px) translateX(-40px) rotate(-20deg); opacity: 1; display: flex; justify-content: center; width: 100%;">
                         <img src="../images/burger_assembly/tomato.png?v=1.0.4" alt="Juicy Tomato Slices" style="width: 230px; height: auto; filter: drop-shadow(0px 6px 12px rgba(0,0,0,0.12)); object-fit: contain;">
                     </div>
                     <!-- Layer 3: Melted Cheese -->
-                    <div class="burger-layer layer-cheese" style="transform: scale(0.9) translateY(-10px); opacity: 1; display: flex; justify-content: center; width: 100%;">
+                    <div class="burger-layer layer-cheese" style="transform: scale(0.7) translateY(-140px); opacity: 1; display: flex; justify-content: center; width: 100%;">
                         <img src="../images/burger_assembly/cheese.png?v=1.0.4" alt="Melted Cheddar Cheese" style="width: 245px; height: auto; filter: drop-shadow(0px 6px 12px rgba(0,0,0,0.12)); object-fit: contain;">
                     </div>
                     <!-- Layer 4: Crispy Chicken Patty -->
-                    <div class="burger-layer layer-patty" style="transform: translateX(15px) rotate(5deg); opacity: 1; display: flex; justify-content: center; width: 100%;">
+                    <div class="burger-layer layer-patty" style="transform: translateY(-50px) translateX(30px) rotate(15deg); opacity: 1; display: flex; justify-content: center; width: 100%;">
                         <img src="../images/burger_assembly/chicken.png?v=1.0.4" alt="Golden Crispy Chicken Patty" style="width: 240px; height: auto; filter: drop-shadow(0px 8px 18px rgba(0,0,0,0.18)); object-fit: contain;">
                     </div>
                     <!-- Layer 5: Fresh Lettuce -->
-                    <div class="burger-layer layer-lettuce" style="transform: translateX(-15px) rotate(-6deg); opacity: 1; display: flex; justify-content: center; width: 100%;">
+                    <div class="burger-layer layer-lettuce" style="transform: translateY(120px) translateX(-30px) rotate(-15deg); opacity: 1; display: flex; justify-content: center; width: 100%;">
                         <img src="../images/burger_assembly/lettuce.png?v=1.0.4" alt="Fresh Crisp Lettuce" style="width: 255px; height: auto; filter: drop-shadow(0px 5px 10px rgba(0,0,0,0.1)); object-fit: contain;">
                     </div>
                     <!-- Layer 6: Bottom Bun -->
-                    <div class="burger-layer layer-bottom-bun" style="transform: translateY(20px); opacity: 1; display: flex; justify-content: center; width: 100%;">
+                    <div class="burger-layer layer-bottom-bun" style="transform: translateY(260px); opacity: 1; display: flex; justify-content: center; width: 100%;">
                         <img src="../images/burger_assembly/bottom_bun.png?v=1.0.4" alt="Bottom Bun" style="width: 250px; height: auto; filter: drop-shadow(0px 8px 15px rgba(0,0,0,0.15)); object-fit: contain;">
                     </div>
                 </div>
@@ -454,30 +454,59 @@
         /**
          * Scroll-Linked Burger Layers Assembly Calculations
          */
-        function handleBurgerScroll() {
-            const section = document.querySelector('.burger-assembly-container');
-            if (!section) return;
+        let isBurgerIntroPlaying = true;
 
-            const rect = section.getBoundingClientRect();
-            const sectionTop = rect.top + window.scrollY;
-            const scrollY = window.scrollY;
-            const maxScroll = 380; // Distance over which the assembly completes
-            
-            // Calculate progress (0 to 1) based on scroll offset from the section top
-            const startOffset = sectionTop - 150;
-            let progress = (scrollY - startOffset) / maxScroll;
-            progress = Math.min(Math.max(progress, 0), 1); // Clamp value
-
+        function playBurgerIntroAnimation() {
+            const topBun = document.querySelector('.layer-top-bun');
+            const tomato = document.querySelector('.layer-tomato');
+            const cheese = document.querySelector('.layer-cheese');
+            const patty = document.querySelector('.layer-patty');
+            const lettuce = document.querySelector('.layer-lettuce');
+            const bottomBun = document.querySelector('.layer-bottom-bun');
             const glow = document.getElementById('burger-glow');
             const steam = document.getElementById('burger-steam');
 
-            if (progress >= 0.9) {
-                glow.classList.add('active');
-                steam.style.opacity = '1';
+            if (window.gsap) {
+                const tl = gsap.timeline({
+                    onComplete: () => {
+                        isBurgerIntroPlaying = false;
+                        handleBurgerScroll();
+                    }
+                });
+                tl.delay(0.6);
+                tl.to(bottomBun, { y: 0, duration: 1.2, ease: "elastic.out(1, 0.75)" }, 0)
+                  .to(lettuce, { y: 0, x: 0, rotation: 0, duration: 1.2, ease: "elastic.out(1, 0.75)" }, 0.1)
+                  .to(patty, { y: 0, x: 0, rotation: 0, duration: 1.2, ease: "elastic.out(1, 0.75)" }, 0.2)
+                  .to(cheese, { y: 0, scale: 1, duration: 1.2, ease: "elastic.out(1, 0.75)" }, 0.3)
+                  .to(tomato, { y: 0, x: 0, rotation: 0, duration: 1.2, ease: "elastic.out(1, 0.75)" }, 0.4)
+                  .to(topBun, { y: 0, duration: 1.2, ease: "elastic.out(1, 0.75)", onComplete: () => {
+                      if (glow) glow.classList.add('active');
+                      if (steam) steam.style.opacity = '1';
+                  }}, 0.5);
             } else {
-                glow.classList.remove('active');
-                steam.style.opacity = '0';
+                setTimeout(() => {
+                    const layers = [bottomBun, lettuce, patty, cheese, tomato, topBun];
+                    layers.forEach(layer => {
+                        if (layer) {
+                            layer.style.transition = 'transform 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+                            if (layer === cheese) {
+                                layer.style.transform = 'scale(1) translateY(0)';
+                            } else {
+                                layer.style.transform = 'translateY(0) translateX(0) rotate(0)';
+                            }
+                        }
+                    });
+                    setTimeout(() => {
+                        isBurgerIntroPlaying = false;
+                        if (glow) glow.classList.add('active');
+                        if (steam) steam.style.opacity = '1';
+                    }, 1300);
+                }, 600);
             }
+        }
+
+        function handleBurgerScroll() {
+            if (isBurgerIntroPlaying) return;
 
             const topBun = document.querySelector('.layer-top-bun');
             const tomato = document.querySelector('.layer-tomato');
@@ -485,42 +514,55 @@
             const patty = document.querySelector('.layer-patty');
             const lettuce = document.querySelector('.layer-lettuce');
             const bottomBun = document.querySelector('.layer-bottom-bun');
+            const glow = document.getElementById('burger-glow');
+            const steam = document.getElementById('burger-steam');
 
-            const layers = [topBun, tomato, cheese, patty, lettuce, bottomBun];
-            layers.forEach(layer => {
-                if (layer) layer.style.opacity = 1; // Always fully visible for beautiful premium 3D layout!
-            });
+            const scrollY = window.scrollY;
+            const maxScroll = 400; // Explodes over 400px of scrolling
+            let progress = 1 - (scrollY / maxScroll);
+            progress = Math.min(Math.max(progress, 0), 1); // Clamp between 0 and 1
 
-            if (topBun) {
-                const y = -220 * (1 - progress);
-                topBun.style.transform = `translateY(${y}px)`;
+            if (progress >= 0.9) {
+                if (glow) glow.classList.add('active');
+                if (steam) steam.style.opacity = '1';
+            } else {
+                if (glow) glow.classList.remove('active');
+                if (steam) steam.style.opacity = '0';
             }
-            if (tomato) {
-                const y = -140 * (1 - progress);
-                const x = -30 * (1 - progress);
-                const rot = -15 * (1 - progress);
-                tomato.style.transform = `translateY(${y}px) translateX(${x}px) rotate(${rot}deg)`;
-            }
-            if (cheese) {
-                const scale = 0.85 + 0.15 * progress;
-                const y = -70 * (1 - progress);
-                cheese.style.transform = `scale(${scale}) translateY(${y}px)`;
-            }
-            if (patty) {
-                const y = 10 * (1 - progress);
-                const x = 25 * (1 - progress);
-                const rot = 10 * (1 - progress);
-                patty.style.transform = `translateY(${y}px) translateX(${x}px) rotate(${rot}deg)`;
-            }
-            if (lettuce) {
-                const y = 80 * (1 - progress);
-                const x = -25 * (1 - progress);
-                const rot = -10 * (1 - progress);
-                lettuce.style.transform = `translateY(${y}px) translateX(${x}px) rotate(${rot}deg)`;
-            }
-            if (bottomBun) {
-                const y = 160 * (1 - progress);
-                bottomBun.style.transform = `translateY(${y}px)`;
+
+            const yTopBun = -380 * (1 - progress);
+            
+            const yTomato = -240 * (1 - progress);
+            const xTomato = -40 * (1 - progress);
+            const rotTomato = -20 * (1 - progress);
+            
+            const yCheese = -140 * (1 - progress);
+            const scaleCheese = 0.7 + 0.3 * progress;
+            
+            const yPatty = -50 * (1 - progress);
+            const xPatty = 30 * (1 - progress);
+            const rotPatty = 15 * (1 - progress);
+            
+            const yLettuce = 120 * (1 - progress);
+            const xLettuce = -30 * (1 - progress);
+            const rotLettuce = -15 * (1 - progress);
+            
+            const yBottomBun = 260 * (1 - progress);
+
+            if (window.gsap) {
+                gsap.to(topBun, { y: yTopBun, duration: 0.15, ease: "power1.out", overwrite: "auto" });
+                gsap.to(tomato, { y: yTomato, x: xTomato, rotation: rotTomato, duration: 0.15, ease: "power1.out", overwrite: "auto" });
+                gsap.to(cheese, { y: yCheese, scale: scaleCheese, duration: 0.15, ease: "power1.out", overwrite: "auto" });
+                gsap.to(patty, { y: yPatty, x: xPatty, rotation: rotPatty, duration: 0.15, ease: "power1.out", overwrite: "auto" });
+                gsap.to(lettuce, { y: yLettuce, x: xLettuce, rotation: rotLettuce, duration: 0.15, ease: "power1.out", overwrite: "auto" });
+                gsap.to(bottomBun, { y: yBottomBun, duration: 0.15, ease: "power1.out", overwrite: "auto" });
+            } else {
+                if (topBun) topBun.style.transform = `translateY(${yTopBun}px)`;
+                if (tomato) tomato.style.transform = `translateY(${yTomato}px) translateX(${xTomato}px) rotate(${rotTomato}deg)`;
+                if (cheese) cheese.style.transform = `scale(${scaleCheese}) translateY(${yCheese}px)`;
+                if (patty) patty.style.transform = `translateY(${yPatty}px) translateX(${xPatty}px) rotate(${rotPatty}deg)`;
+                if (lettuce) lettuce.style.transform = `translateY(${yLettuce}px) translateX(${xLettuce}px) rotate(${rotLettuce}deg)`;
+                if (bottomBun) bottomBun.style.transform = `translateY(${yBottomBun}px)`;
             }
         }
 
@@ -561,9 +603,9 @@
             await loadCategories();
             setTimeout(loadCatalogMenu, 800); // 800ms buffer for elegant loading skeleton preview
             
-            // Add scroll listeners for assembly
+            // Play intro animation, which will automatically enable scroll listener afterwards
+            playBurgerIntroAnimation();
             window.addEventListener('scroll', handleBurgerScroll);
-            handleBurgerScroll(); // Initial run
 
             // Check if checkout URL parameter is present
             const urlParams = new URLSearchParams(window.location.search);

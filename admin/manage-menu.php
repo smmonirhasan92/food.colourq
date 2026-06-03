@@ -51,6 +51,9 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                 <a href="manage-riders.php" class="sidebar-link">
                     <i class="fa-solid fa-motorcycle"></i> Delivery Riders
                 </a>
+                <a href="reports.php" class="sidebar-link">
+                    <i class="fa-solid fa-chart-line"></i> Business Reports
+                </a>
             </nav>
 
             <div class="sidebar-footer" style="display: flex; flex-direction: column; gap: 0.5rem; padding: 1rem 1.5rem;">
@@ -98,10 +101,14 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                             <input class="form-input" type="text" id="dish-name" required placeholder="e.g. Herb Crusted Ribeye">
                         </div>
 
-                        <div class="grid grid-cols-2">
+                        <div class="grid grid-cols-3" style="grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
                             <div class="form-group">
                                 <label class="form-label" for="dish-price">Price (Tk.)</label>
                                 <input class="form-input" type="number" id="dish-price" step="1" required placeholder="e.g. 450">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="dish-cost">Cost (Tk.)</label>
+                                <input class="form-input" type="number" id="dish-cost" step="1" required placeholder="e.g. 200">
                             </div>
                             <div class="form-group">
                                 <label class="form-label" for="dish-category">Category</label>
@@ -312,6 +319,7 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
 
             const name = document.getElementById('dish-name').value;
             const price = parseFloat(document.getElementById('dish-price').value);
+            const cost_price = parseFloat(document.getElementById('dish-cost').value);
             const category = document.getElementById('dish-category').value;
             const imgUrl = document.getElementById('dish-img').value;
             const desc = document.getElementById('dish-desc').value;
@@ -328,6 +336,7 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                 const formData = new FormData();
                 formData.append('name', name);
                 formData.append('price', price);
+                formData.append('cost_price', cost_price);
                 formData.append('category', category);
                 formData.append('description', desc);
                 formData.append('image_url', imgUrl);

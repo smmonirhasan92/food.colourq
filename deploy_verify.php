@@ -66,6 +66,20 @@ try {
         }
     }
 
+    // Cost Price Migration: Add cost_price to menu_items table if not exists
+    if (DB_TYPE === 'sqlite') {
+        $colCheck = $db->query("PRAGMA table_info(menu_items)")->fetchAll(PDO::FETCH_COLUMN, 1);
+        if (!in_array('cost_price', $colCheck)) {
+            $db->exec("ALTER TABLE menu_items ADD COLUMN cost_price DECIMAL(10, 2) NOT NULL DEFAULT 0.00");
+        }
+    } else {
+        $colsQuery = $db->query("SHOW COLUMNS FROM menu_items LIKE 'cost_price'");
+        $colExists = $colsQuery->fetch();
+        if (!$colExists) {
+            $db->exec("ALTER TABLE menu_items ADD COLUMN cost_price DECIMAL(10, 2) NOT NULL DEFAULT 0.00");
+        }
+    }
+
     // Category Migration: Create menu_categories table
     if (DB_TYPE === 'sqlite') {
         $db->exec("CREATE TABLE IF NOT EXISTS menu_categories (
