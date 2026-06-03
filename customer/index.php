@@ -659,7 +659,7 @@
                             <span style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary);">Qty:</span>
                             <div style="display: flex; align-items: center; gap: 0.35rem; background: rgba(234, 103, 33, 0.04); border: 1px solid rgba(234, 103, 33, 0.25); padding: 0.2rem; border-radius: 8px;">
                                 <button type="button" class="qty-btn btn-modal-minus" data-id="${item.id}" style="width: 26px; height: 26px; border-radius: 6px; border: none; background: rgba(234, 103, 33, 0.12); color: var(--primary); cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1rem; transition: all 0.2s;">-</button>
-                                <span style="font-weight: 800; font-size: 0.95rem; color: white; min-width: 20px; text-align: center;">${item.quantity}</span>
+                                <span style="font-weight: 800; font-size: 0.95rem; color: var(--text-primary); min-width: 20px; text-align: center;">${item.quantity}</span>
                                 <button type="button" class="qty-btn btn-modal-plus" data-id="${item.id}" style="width: 26px; height: 26px; border-radius: 6px; border: none; background: var(--primary); color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1rem; transition: all 0.2s;">+</button>
                             </div>
                         </div>
