@@ -1,0 +1,13 @@
+# Premium Routing and Security Configurations - Food ColourQ
+
+# Prevent directory listing
+Options -Indexes
+
+# Set the default index page to point to the customer storefront
+DirectoryIndex customer/index.php
+
+RewriteEngine On
+RewriteBase /
+
+# Route root requests (empty path) directly to the customer index page
+RewriteRule ^$ customer/index.php [L]
