@@ -142,6 +142,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             border-color: var(--primary);
             box-shadow: 0 0 0 2px rgba(234, 103, 33, 0.2);
         }
+        /* Chrome Autocomplete background and text color override */
+        .form-input:-webkit-autofill,
+        .form-input:-webkit-autofill:hover, 
+        .form-input:-webkit-autofill:focus, 
+        .form-input:-webkit-autofill:active {
+            -webkit-box-shadow: 0 0 0 1000px rgb(15, 23, 42) inset !important;
+            -webkit-text-fill-color: #ffffff !important;
+            transition: background-color 5000s ease-in-out 0s;
+        }
     </style>
 </head>
 <body>
