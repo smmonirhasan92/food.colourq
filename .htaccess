@@ -3,8 +3,8 @@
 # Prevent directory listing
 Options -Indexes
 
-# Set the default index page to point to the customer storefront
-DirectoryIndex customer/index.php
+# Set the default index page search order
+DirectoryIndex index.php index.html customer/index.php
 
 RewriteEngine On
 RewriteBase /
