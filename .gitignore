@@ -1,0 +1,13 @@
+# Ignore local database
+database/food_delivery.db
+database/deploy_log.txt
+
+# Ignore logs
+*.log
+
+# Ignore IDE configs
+.vscode/
+.idea/
+
+# Ignore scratch files
+scratch/

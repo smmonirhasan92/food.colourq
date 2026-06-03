@@ -1,0 +1,2 @@
+Placeholder for physical static sound files (e.g. mp3/wav sound bites).
+Currently bypassed by the high-fidelity native Web Audio API synthesizer.
