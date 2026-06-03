@@ -47,14 +47,14 @@
 
     <header class="client-header">
         <div class="container header-container">
-            <a href="index.php" class="brand-logo">
+            <a href="/" class="brand-logo">
                 Crispy Chicken<span class="brand-dot"></span>
             </a>
 
             <nav class="client-nav">
-                <a href="index.php" class="nav-link">Home</a>
-                <a href="index.php?checkout=1" class="nav-link">Checkout</a>
-                <a href="order-tracking.php" class="nav-link active">Order Tracking</a>
+                <a href="/" class="nav-link">Home</a>
+                <a href="/?checkout=1" class="nav-link">Checkout</a>
+                <a href="/customer/order-tracking.php" class="nav-link active">Order Tracking</a>
             </nav>
 
             <div class="header-actions">
@@ -577,7 +577,7 @@
             e.preventDefault();
             const input = document.getElementById('search-order-number');
             if (input && input.value.trim()) {
-                window.location.href = `order-tracking.php?order_number=${encodeURIComponent(input.value.trim().toUpperCase())}`;
+                window.location.href = `/customer/order-tracking.php?order_number=${encodeURIComponent(input.value.trim().toUpperCase())}`;
             }
         }
 
@@ -623,7 +623,7 @@
                     recentContainer.style.display = 'block';
                     recentList.innerHTML = recentOrders.map(order => `
                         <li>
-                            <a href="order-tracking.php?order_number=${order}" class="glass-panel" style="display: flex; justify-content: space-between; align-items: center; padding: 0.85rem 1.25rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); text-decoration: none; color: var(--text-primary); transition: all 0.25s ease; background: rgba(255,255,255,0.01); width: 100%;">
+                            <a href="/customer/order-tracking.php?order_number=${order}" class="glass-panel" style="display: flex; justify-content: space-between; align-items: center; padding: 0.85rem 1.25rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); text-decoration: none; color: var(--text-primary); transition: all 0.25s ease; background: rgba(255,255,255,0.01); width: 100%;">
                                 <span style="font-weight: 700; color: var(--primary); font-family: var(--font-heading);"><i class="fa-solid fa-hashtag"></i> ${order}</span>
                                 <span style="font-size: 0.85rem; color: var(--text-secondary); display: flex; align-items: center; gap: 0.25rem;">
                                     Click to Track <i class="fa-solid fa-arrow-right" style="font-size: 0.75rem;"></i>

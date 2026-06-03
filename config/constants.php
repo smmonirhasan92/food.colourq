@@ -58,6 +58,7 @@ define('DB_MYSQL_CHARSET', 'utf8mb4');
 define('STATUS_PENDING', 'pending');
 define('STATUS_PREPARING', 'preparing');
 define('STATUS_READY', 'ready');
+define('STATUS_DELIVERING', 'delivering');
 define('STATUS_DELIVERED', 'delivered');
 define('STATUS_CANCELLED', 'cancelled');
 
@@ -66,6 +67,7 @@ const VALID_ORDER_STATUSES = [
     STATUS_PENDING,
     STATUS_PREPARING,
     STATUS_READY,
+    STATUS_DELIVERING,
     STATUS_DELIVERED,
     STATUS_CANCELLED
 ];

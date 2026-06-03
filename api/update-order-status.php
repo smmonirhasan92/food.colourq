@@ -30,6 +30,7 @@ $input = sanitizeInput($input);
 $status = isset($input['status']) ? trim($input['status']) : null;
 $orderId = isset($input['order_id']) ? $input['order_id'] : null;
 $orderNumber = isset($input['order_number']) ? trim($input['order_number']) : null;
+$deliveryManId = isset($input['delivery_man_id']) ? (int)$input['delivery_man_id'] : null;
 
 if (!$status || (!$orderId && !$orderNumber)) {
     sendJsonResponse(false, "Missing required status, or order_id/order_number.", null, 400);
@@ -37,7 +38,7 @@ if (!$status || (!$orderId && !$orderNumber)) {
 
 // Validate status against constants
 if (!isValidOrderStatus($status)) {
-    sendJsonResponse(false, "Invalid status state. Allowed states: pending, preparing, ready, delivered, cancelled.", null, 400);
+    sendJsonResponse(false, "Invalid status state. Allowed states: pending, preparing, ready, delivering, delivered, cancelled.", null, 400);
 }
 
 try {
@@ -71,7 +72,7 @@ try {
     $timestampColumn = null;
     if ($status === STATUS_PREPARING) {
         $timestampColumn = 'confirmed_at';
-    } elseif ($status === STATUS_READY) {
+    } elseif ($status === STATUS_READY || $status === STATUS_DELIVERING) {
         $timestampColumn = 'prepared_at';
     } elseif ($status === STATUS_DELIVERED) {
         $timestampColumn = 'delivered_at';
@@ -80,19 +81,35 @@ try {
     // Start transaction
     $db->beginTransaction();
     
-    // Prepare update query
-    if ($timestampColumn) {
-        $updateQuery = "UPDATE orders 
-                        SET status = ?, {$timestampColumn} = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP 
-                        WHERE id = ?";
+    // Prepare update query (supporting optional delivery_man_id)
+    if ($deliveryManId) {
+        if ($timestampColumn) {
+            $updateQuery = "UPDATE orders 
+                            SET status = ?, delivery_man_id = ?, {$timestampColumn} = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP 
+                            WHERE id = ?";
+            $params = [$status, $deliveryManId, $oId];
+        } else {
+            $updateQuery = "UPDATE orders 
+                            SET status = ?, delivery_man_id = ?, updated_at = CURRENT_TIMESTAMP 
+                            WHERE id = ?";
+            $params = [$status, $deliveryManId, $oId];
+        }
     } else {
-        $updateQuery = "UPDATE orders 
-                        SET status = ?, updated_at = CURRENT_TIMESTAMP 
-                        WHERE id = ?";
+        if ($timestampColumn) {
+            $updateQuery = "UPDATE orders 
+                            SET status = ?, {$timestampColumn} = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP 
+                            WHERE id = ?";
+            $params = [$status, $oId];
+        } else {
+            $updateQuery = "UPDATE orders 
+                            SET status = ?, updated_at = CURRENT_TIMESTAMP 
+                            WHERE id = ?";
+            $params = [$status, $oId];
+        }
     }
     
     $updateStmt = $db->prepare($updateQuery);
-    $updateStmt->execute([$status, $oId]);
+    $updateStmt->execute($params);
     
     // Formulate a user-friendly notification message based on status
     $message = "Your order {$oNum} status has been updated to {$status}.";
@@ -100,6 +117,8 @@ try {
         $message = "Your order {$oNum} has been accepted and is now being prepared in the kitchen.";
     } elseif ($status === STATUS_READY) {
         $message = "Great news! Your order {$oNum} is ready and is now out for delivery.";
+    } elseif ($status === STATUS_DELIVERING) {
+        $message = "Great news! Your order {$oNum} is on the way. Our delivery rider is coming to your location.";
     } elseif ($status === STATUS_DELIVERED) {
         $message = "Your order {$oNum} has been delivered successfully. Enjoy your premium meal!";
     } elseif ($status === STATUS_CANCELLED) {

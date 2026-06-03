@@ -380,7 +380,7 @@ function initCheckoutPageValidation() {
                             localStorage.setItem('food_coloured_recent_orders', JSON.stringify(recentOrders.slice(0, 5)));
                         }
                         
-                        window.location.href = `order-tracking.php?order_number=${orderNumber}`;
+                        window.location.href = `/customer/order-tracking.php?order_number=${orderNumber}`;
                     }, 1800);
                     return;
                 } else {
@@ -416,7 +416,7 @@ function initCheckoutPageValidation() {
                 }
 
                 window.CartSystem.clearCart();
-                window.location.href = `order-tracking.php?order_number=${simulatedOrderNumber}&simulate_submit=true`;
+                window.location.href = `/customer/order-tracking.php?order_number=${simulatedOrderNumber}&simulate_submit=true`;
             }, 1800);
         }
     });

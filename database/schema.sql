@@ -12,6 +12,16 @@ CREATE TABLE IF NOT EXISTS users (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- 1.5 Delivery Men Table
+CREATE TABLE IF NOT EXISTS delivery_men (
+    id INTEGER PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(100) NOT NULL,
+    phone VARCHAR(20) NOT NULL,
+    status VARCHAR(20) DEFAULT 'available', -- 'available', 'busy', 'offline'
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
 -- 2. Menu Items Table
 CREATE TABLE IF NOT EXISTS menu_items (
     id INTEGER PRIMARY KEY AUTO_INCREMENT,
@@ -44,6 +54,7 @@ CREATE TABLE IF NOT EXISTS orders (
     dispute_reported_at TIMESTAMP NULL,
     feedback_rating INTEGER NULL,
     feedback_comment TEXT NULL,
+    delivery_man_id INTEGER NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE

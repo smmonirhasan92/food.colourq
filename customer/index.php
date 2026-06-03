@@ -17,14 +17,14 @@
     <!-- Premium Storefront Client Header -->
     <header class="client-header">
         <div class="container header-container">
-            <a href="index.php" class="brand-logo">
+            <a href="/" class="brand-logo">
                 Crispy Chicken<span class="brand-dot"></span>
             </a>
 
             <nav class="client-nav">
-                <a href="index.php" class="nav-link active">Home</a>
+                <a href="/" class="nav-link active">Home</a>
                 <a href="#" class="nav-link" onclick="openCheckoutModal(); return false;">Checkout</a>
-                <a href="order-tracking.php" class="nav-link">Order Tracking</a>
+                <a href="/customer/order-tracking.php" class="nav-link">Order Tracking</a>
             </nav>
 
             <div class="header-actions">

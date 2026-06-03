@@ -38,3 +38,10 @@ INSERT INTO admin_settings (setting_key, setting_value, updated_at) VALUES
 ('estimated_delivery_time', '30-45 mins', CURRENT_TIMESTAMP),
 ('delivery_fee', '60.00', CURRENT_TIMESTAMP),
 ('minimum_order_value', '250.00', CURRENT_TIMESTAMP);
+
+-- 4. Seed Delivery Men
+INSERT INTO delivery_men (name, phone, status, created_at) VALUES
+('Rahat Khan', '01712345678', 'available', CURRENT_TIMESTAMP),
+('Sumon Mia', '01812345678', 'available', CURRENT_TIMESTAMP),
+('Kamal Hossain', '01912345678', 'available', CURRENT_TIMESTAMP);
+

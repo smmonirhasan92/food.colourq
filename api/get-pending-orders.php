@@ -21,9 +21,11 @@ try {
     // Fetch all active/pending orders (excluding completed 'delivered' and 'cancelled')
     $query = "SELECT o.id, o.order_number, o.total_price, o.status, o.delivery_address, o.phone, 
                      o.created_at, o.confirmed_at, o.prepared_at, 
+                     o.delivery_man_id, d.name AS delivery_man_name, d.phone AS delivery_man_phone,
                      u.username, u.email, u.role
               FROM orders o
               JOIN users u ON o.user_id = u.id
+              LEFT JOIN delivery_men d ON o.delivery_man_id = d.id
               WHERE o.status NOT IN ('" . STATUS_DELIVERED . "', '" . STATUS_CANCELLED . "')
               ORDER BY o.created_at DESC";
               
@@ -80,6 +82,9 @@ try {
             'created_at' => $order['created_at'],
             'confirmed_at' => $order['confirmed_at'],
             'prepared_at' => $order['prepared_at'],
+            'delivery_man_id' => $order['delivery_man_id'] !== null ? (int)$order['delivery_man_id'] : null,
+            'delivery_man_name' => $order['delivery_man_name'],
+            'delivery_man_phone' => $order['delivery_man_phone'],
             // Dynamic dual customer mapping to support direct and nested payload styles
             'username' => $order['username'],
             'email' => $order['email'],

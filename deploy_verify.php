@@ -20,6 +20,52 @@ try {
     $db = Database::getConnection();
     $connectionSuccess = true;
 
+    // Database Migration: Create delivery_men table and add delivery_man_id to orders
+    if (DB_TYPE === 'sqlite') {
+        $db->exec("CREATE TABLE IF NOT EXISTS delivery_men (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name VARCHAR(100) NOT NULL,
+            phone VARCHAR(20) NOT NULL,
+            status VARCHAR(20) DEFAULT 'available',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )");
+        
+        $dmCount = $db->query("SELECT COUNT(*) FROM delivery_men")->fetchColumn();
+        if ($dmCount == 0) {
+            $db->exec("INSERT INTO delivery_men (name, phone, status) VALUES 
+                ('Rahat Khan', '01712345678', 'available'),
+                ('Sumon Mia', '01812345678', 'available'),
+                ('Kamal Hossain', '01912345678', 'available')");
+        }
+        
+        $colCheck = $db->query("PRAGMA table_info(orders)")->fetchAll(PDO::FETCH_COLUMN, 1);
+        if (!in_array('delivery_man_id', $colCheck)) {
+            $db->exec("ALTER TABLE orders ADD COLUMN delivery_man_id INTEGER NULL");
+        }
+    } else {
+        $db->exec("CREATE TABLE IF NOT EXISTS delivery_men (
+            id INT PRIMARY KEY AUTO_INCREMENT,
+            name VARCHAR(100) NOT NULL,
+            phone VARCHAR(20) NOT NULL,
+            status VARCHAR(20) DEFAULT 'available',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )");
+        
+        $dmCount = $db->query("SELECT COUNT(*) FROM delivery_men")->fetchColumn();
+        if ($dmCount == 0) {
+            $db->exec("INSERT INTO delivery_men (name, phone, status) VALUES 
+                ('Rahat Khan', '01712345678', 'available'),
+                ('Sumon Mia', '01812345678', 'available'),
+                ('Kamal Hossain', '01912345678', 'available')");
+        }
+        
+        $colsQuery = $db->query("SHOW COLUMNS FROM orders LIKE 'delivery_man_id'");
+        $colExists = $colsQuery->fetch();
+        if (!$colExists) {
+            $db->exec("ALTER TABLE orders ADD COLUMN delivery_man_id INT NULL");
+        }
+    }
+
     // Fetch all tables in MySQL
     $tablesQuery = $db->query("SHOW TABLES");
     $tables = $tablesQuery->fetchAll(PDO::FETCH_COLUMN);

@@ -235,6 +235,40 @@
                     </table>
                 </div>
             </section>
+
+            <!-- Delivery Team Status Panel -->
+            <section class="glass-panel" style="padding: 2rem; margin-top: 3rem; overflow: hidden; background-color: var(--bg-dark-surface); border: 1px solid var(--border-color); margin-bottom: 3rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem;">
+                    <div>
+                        <h3 style="font-family: var(--font-heading); font-size: 1.35rem; color: var(--text-primary); display: flex; align-items: center; gap: 0.5rem;">
+                            <i class="fa-solid fa-truck-ramp-box" style="color: var(--primary);"></i> Delivery Team Performance & Status
+                        </h3>
+                        <p style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 0.25rem;">Monitor riders' active status and tracking metrics (completed orders counter).</p>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="premium-table stack-mobile">
+                        <thead>
+                            <tr>
+                                <th>Rider ID</th>
+                                <th>Rider Name</th>
+                                <th>Contact Phone</th>
+                                <th>Active Status</th>
+                                <th>Completed Deliveries</th>
+                            </tr>
+                        </thead>
+                        <tbody id="delivery-team-tbody">
+                            <tr>
+                                <td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                                    <i class="fa-solid fa-spinner fa-spin" style="font-size: 1.5rem; margin-bottom: 0.5rem;"></i>
+                                    <p>Loading delivery team data...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
         </main>
     </div>
 
@@ -290,7 +324,7 @@
                 `;
             } else if (status === 'preparing') {
                 buttonsHtml = `
-                    <button class="btn btn-primary btn-sm" onclick="updateOrderStatus('${orderNum}', 'delivering', ${orderId})" title="Send order out for delivery">
+                    <button class="btn btn-primary btn-sm" onclick="openAssignRiderModal('${orderNum}', ${orderId})" title="Send order out for delivery">
                         Deliver <i class="fa-solid fa-truck"></i>
                     </button>
                     <button class="btn btn-glass btn-sm" onclick="updateOrderStatus('${orderNum}', 'cancelled', ${orderId})">
@@ -484,6 +518,7 @@
                         <td data-label="Received Time" style="color: var(--text-muted);">${receivedTime}</td>
                         <td data-label="Tracking Status">
                             <span class="${getStatusColorClass(order.status)}" id="badge-${numericId}">${order.status.charAt(0).toUpperCase() + order.status.slice(1)}</span>
+                            ${order.delivery_man_name ? `<div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;"><i class="fa-solid fa-motorcycle"></i> ${order.delivery_man_name}</div>` : ''}
                         </td>
                         <td data-label="Actions Control">
                             <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
@@ -736,9 +771,11 @@
 
             fetchPendingOrdersDesk();
             fetchDisputesDesk();
+            fetchDeliveryMen();
             setInterval(() => {
                 fetchPendingOrdersDesk();
                 fetchDisputesDesk();
+                fetchDeliveryMen();
             }, 15000);
         });
     </script>
@@ -773,6 +810,33 @@
                 </button>
                 <button class="btn btn-glass btn-lg" id="btn-dismiss-alert" style="flex: 1; border-color: rgba(255, 255, 255, 0.1); color: #ffffff;" onclick="dismissOrderAlert()">
                     Dismiss
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Assign Rider Modal Overlay -->
+    <div id="assign-rider-overlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(8px); z-index: 10000; align-items: center; justify-content: center; transition: all 0.3s ease;">
+        <div class="glass-panel" style="background: var(--bg-dark-surface, #1e293b); border: 2px solid var(--primary); padding: 3rem; border-radius: 24px; text-align: center; width: 450px; max-width: 90%; box-shadow: 0 25px 50px rgba(0,0,0,0.5); position: relative; transform: scale(0.9); transition: transform 0.3s ease;">
+            <div style="width: 70px; height: 70px; background: rgba(234, 103, 33, 0.1); border: 2px solid var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; color: var(--primary); font-size: 2rem;">
+                <i class="fa-solid fa-motorcycle"></i>
+            </div>
+            <h3 style="font-family: var(--font-heading); font-size: 1.5rem; color: #ffffff; margin-bottom: 0.5rem;">Assign Delivery Rider</h3>
+            <p id="assign-rider-order-label" style="color: var(--text-muted, #94a3b8); margin-bottom: 1.5rem; font-size: 0.95rem;">Choose a rider to dispatch for Order #FC-XXXX</p>
+            
+            <div style="text-align: left; margin-bottom: 2rem;">
+                <label style="color: var(--text-muted, #94a3b8); font-size: 0.85rem; font-weight: 600; display: block; margin-bottom: 0.5rem;">Select Available Rider</label>
+                <select id="rider-select" class="form-input" style="width: 100%; padding: 0.75rem; background: var(--bg-dark, #0f172a); border: 1px solid var(--border-color, #334155); color: #ffffff; border-radius: 8px; font-size: 0.95rem; box-sizing: border-box; outline: none; cursor: pointer;">
+                    <!-- Dynamic select options -->
+                </select>
+            </div>
+            
+            <div style="display: flex; gap: 1rem;">
+                <button class="btn btn-primary btn-lg" style="flex: 1;" onclick="confirmAssignRider()">
+                    Dispatch <i class="fa-solid fa-paper-plane" style="margin-left: 0.25rem;"></i>
+                </button>
+                <button class="btn btn-glass btn-lg" style="flex: 1; border-color: rgba(255, 255, 255, 0.1); color: #ffffff;" onclick="closeAssignRiderModal()">
+                    Close
                 </button>
             </div>
         </div>
@@ -967,6 +1031,170 @@
 
             // Trigger Print
             window.print();
+        }
+
+        // Delivery Man Assignment System
+        let assignOrderNum = null;
+        let assignOrderId = null;
+        let deliveryMenCache = [];
+
+        async function fetchDeliveryMen() {
+            try {
+                const response = await fetch('../api/get-delivery-men.php');
+                if (!response.ok) throw new Error('API offline');
+                const result = await response.json();
+                if (result.success && result.data) {
+                    deliveryMenCache = result.data;
+                    renderDeliveryTeam(result.data);
+                    populateRiderSelect(result.data);
+                }
+            } catch (error) {
+                console.warn('[AdminDesk] Failed to load delivery team. Falling back to mock riders.');
+                const mockTeam = [
+                    { id: 1, name: 'Rahat Khan', phone: '01712345678', status: 'available', delivery_count: 5 },
+                    { id: 2, name: 'Sumon Mia', phone: '01812345678', status: 'available', delivery_count: 8 },
+                    { id: 3, name: 'Kamal Hossain', phone: '01912345678', status: 'available', delivery_count: 3 }
+                ];
+                deliveryMenCache = mockTeam;
+                renderDeliveryTeam(mockTeam);
+                populateRiderSelect(mockTeam);
+            }
+        }
+
+        function renderDeliveryTeam(team) {
+            const tbody = document.getElementById('delivery-team-tbody');
+            if (!tbody) return;
+            
+            if (team.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                            No riders registered in database.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            tbody.innerHTML = team.map(rider => `
+                <tr>
+                    <td data-label="Rider ID" style="font-weight: 700; color: var(--primary);">#RD-${rider.id}</td>
+                    <td data-label="Rider Name" style="font-weight: 600; color: var(--text-primary);">${rider.name}</td>
+                    <td data-label="Contact Phone" style="color: var(--text-muted); font-family: monospace;">${rider.phone}</td>
+                    <td data-label="Active Status">
+                        <span class="status-badge ${rider.status === 'available' ? 'status-success' : 'status-preparing'}">${rider.status.toUpperCase()}</span>
+                    </td>
+                    <td data-label="Completed Deliveries" style="font-weight: 700; color: var(--text-primary);">${rider.delivery_count} Orders</td>
+                </tr>
+            `).join('');
+        }
+
+        function populateRiderSelect(team) {
+            const select = document.getElementById('rider-select');
+            if (!select) return;
+            select.innerHTML = team.map(rider => 
+                `<option value="${rider.id}">${rider.name} (${rider.phone}) - ${rider.status.toUpperCase()}</option>`
+            ).join('');
+        }
+
+        function openAssignRiderModal(orderNum, orderId) {
+            assignOrderNum = orderNum;
+            assignOrderId = orderId;
+            document.getElementById('assign-rider-order-label').textContent = `Choose a rider to dispatch for Order #${orderNum}`;
+            const overlay = document.getElementById('assign-rider-overlay');
+            overlay.style.display = 'flex';
+            setTimeout(() => {
+                overlay.querySelector('.glass-panel').style.transform = 'scale(1)';
+            }, 10);
+        }
+
+        function closeAssignRiderModal() {
+            const overlay = document.getElementById('assign-rider-overlay');
+            overlay.querySelector('.glass-panel').style.transform = 'scale(0.9)';
+            setTimeout(() => {
+                overlay.style.display = 'none';
+            }, 150);
+            assignOrderNum = null;
+            assignOrderId = null;
+        }
+
+        async function confirmAssignRider() {
+            const select = document.getElementById('rider-select');
+            if (!select || !assignOrderNum) return;
+            const riderId = select.value;
+            
+            try {
+                const payload = {
+                    order_number: assignOrderNum,
+                    status: 'delivering',
+                    delivery_man_id: parseInt(riderId)
+                };
+
+                const response = await fetch('../api/update-order-status.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.success) {
+                        if (window.NotificationSystem) {
+                            window.NotificationSystem.toast('success', 'Order Dispatched', `Order #${assignOrderNum} dispatched with Rider ID: ${riderId}`);
+                        }
+                        closeAssignRiderModal();
+                        fetchPendingOrdersDesk();
+                        fetchDeliveryMen();
+                        return;
+                    }
+                }
+                throw new Error('API offline');
+            } catch (error) {
+                console.log('[AdminDesk] confirmAssignRider API fallback:', error);
+                
+                // Update caching for fallback simulator
+                let rider = deliveryMenCache.find(r => r.id == riderId);
+                if (rider) {
+                    rider.delivery_count = parseInt(rider.delivery_count) + 1;
+                    renderDeliveryTeam(deliveryMenCache);
+                }
+
+                // Call client-side simulator update
+                const badge = document.getElementById(`badge-${assignOrderId}`);
+                if (badge) {
+                    badge.textContent = 'Delivering';
+                    badge.className = 'status-badge status-delivering';
+                }
+
+                // Add rider name beneath badge
+                const td = badge.parentNode;
+                const existingRiderInfo = td.querySelector('.rider-info-sub');
+                if (existingRiderInfo) existingRiderInfo.remove();
+                
+                const riderDiv = document.createElement('div');
+                riderDiv.className = 'rider-info-sub';
+                riderDiv.style.fontSize = '0.75rem';
+                riderDiv.style.color = 'var(--text-muted)';
+                riderDiv.style.marginTop = '0.25rem';
+                riderDiv.innerHTML = `<i class="fa-solid fa-motorcycle"></i> ${rider ? rider.name : 'Rider'}`;
+                td.appendChild(riderDiv);
+
+                const row = document.getElementById(`order-row-${assignOrderId}`);
+                const actionTd = row ? row.querySelector('td[data-label="Actions Control"]') : null;
+                if (actionTd) {
+                    const actionContainer = actionTd.querySelector('div') || actionTd;
+                    actionContainer.innerHTML = getActionButtonsHtml(assignOrderId, assignOrderNum, 'delivering');
+                }
+
+                if (window.NotificationSystem) {
+                    window.NotificationSystem.toast('success', 'State Advanced (Simulated)', `Order #${assignOrderNum} has updated to DELIVERING`);
+                }
+
+                closeAssignRiderModal();
+            }
         }
     </script>
 </body>
