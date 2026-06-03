@@ -986,7 +986,7 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
             const receiptHtml = `
                 <div class="receipt-wrapper">
                     <div class="receipt-header">
-                        <div class="receipt-logo">FOOD COLOURQ</div>
+                        <div class="receipt-logo">Crispy Chicken</div>
                         <div class="receipt-sub">Premium Delivery Service</div>
                         <div class="receipt-sub">Web: food.colourq.com.bd</div>
                     </div>
