@@ -105,7 +105,7 @@
                 
                 <!-- Category Filter Tabs -->
                 <div class="category-tabs-wrapper" style="margin-bottom: 0;">
-                    <div class="category-tabs-container">
+                    <div class="category-tabs-container" id="category-tabs-container-id">
                         <button class="category-tab active" data-category="all">
                             <i class="fa-solid fa-border-all"></i> All Dishes
                         </button>
@@ -171,6 +171,73 @@
     <script src="../assets/js/checkout.js"></script>
 
     <script>
+        // Helper to optimize Unsplash images for storefront speed
+        function optimizeUnsplashUrl(url) {
+            if (!url || typeof url !== 'string') return url;
+            if (url.includes('unsplash.com')) {
+                // replace width to 450
+                url = url.replace(/w=\d+/, 'w=450');
+                // replace quality to 60
+                url = url.replace(/q=\d+/, 'q=60');
+            }
+            return url;
+        }
+
+        let globalCategories = [];
+
+        async function loadCategories() {
+            try {
+                const response = await fetch('../api/get-categories.php');
+                const result = await response.json();
+                if (result.success && result.data) {
+                    globalCategories = result.data;
+                    renderCategoryTabs(result.data);
+                } else {
+                    throw new Error('Failed to load categories');
+                }
+            } catch (error) {
+                console.warn('Falling back to default categories:', error);
+                globalCategories = [
+                    { name: 'Starter', slug: 'appetizer' },
+                    { name: 'Best Seller', slug: 'main' },
+                    { name: 'Dessert', slug: 'dessert' },
+                    { name: 'Drink', slug: 'drink' }
+                ];
+                renderCategoryTabs(globalCategories);
+            }
+        }
+
+        function renderCategoryTabs(categories) {
+            const container = document.getElementById('category-tabs-container-id');
+            if (!container) return;
+
+            const iconMap = {
+                'all': 'fa-border-all',
+                'appetizer': 'fa-bread-slice',
+                'main': 'fa-bowl-rice',
+                'dessert': 'fa-ice-cream',
+                'drink': 'fa-glass-water'
+            };
+
+            let html = `
+                <button class="category-tab active" data-category="all">
+                    <i class="fa-solid fa-border-all"></i> All Dishes
+                </button>
+            `;
+
+            categories.forEach(cat => {
+                const icon = iconMap[cat.slug] || 'fa-tags';
+                html += `
+                    <button class="category-tab" data-category="${cat.slug}">
+                        <i class="fa-solid ${icon}"></i> ${cat.name}
+                    </button>
+                `;
+            });
+
+            container.innerHTML = html;
+            initCategoryFilters(); // Re-bind click handlers for dynamic tabs
+        }
+
         // Dynamic menu catalog fetching and rendering with visual fallback
         async function loadCatalogMenu() {
             const loaders = document.querySelector('.skeleton-loader-container');
@@ -187,22 +254,24 @@
                 if (result.success && result.data) {
                     const categories = result.data;
                     let htmlContent = '';
-                    
-                    const catOrder = ['appetizer', 'main', 'dessert', 'drink'];
-                    const catBadges = {
-                        'appetizer': 'Starter',
-                        'main': 'Best Seller',
-                        'dessert': 'Dessert',
-                        'drink': 'Drink'
-                    };
-
                     let totalItems = 0;
-                    catOrder.forEach(categoryKey => {
+
+                    // Build a list of category keys in order based on dynamic categories
+                    const categoryKeys = globalCategories.map(cat => cat.slug);
+                    Object.keys(categories).forEach(key => {
+                        if (!categoryKeys.includes(key)) {
+                            categoryKeys.push(key);
+                        }
+                    });
+
+                    categoryKeys.forEach(categoryKey => {
                         const items = categories[categoryKey] || [];
                         if (items.length > 0) {
+                            const catObj = globalCategories.find(c => c.slug === categoryKey);
+                            const badge = catObj ? catObj.name : (categoryKey.charAt(0).toUpperCase() + categoryKey.slice(1));
+                            
                             items.forEach(item => {
                                 totalItems++;
-                                const badge = catBadges[categoryKey];
                                 
                                 // Premium image resolver to map database names to high-res mouth-watering photos
                                 const premiumImageMap = {
@@ -231,11 +300,13 @@
                                     }
                                 }
                                 
+                                const optimizedImg = optimizeUnsplashUrl(img);
+                                
                                 htmlContent += `
                                     <div class="glass-panel glass-panel-interactive menu-card" data-category="${categoryKey}">
                                         <div class="menu-card-img-container">
                                             <span class="menu-card-badge">${badge}</span>
-                                            <img src="${img}" alt="${item.name}" class="menu-card-img" onerror="this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=600'">
+                                            <img src="${optimizedImg}" alt="${item.name}" class="menu-card-img" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=60&w=450'">
                                         </div>
                                         <div class="menu-card-body">
                                             <h3 class="menu-card-title">${item.name}</h3>
@@ -249,13 +320,13 @@
                                                             data-id="dish-${item.id}" 
                                                             data-name="${item.name}" 
                                                             data-price="${item.price}" 
-                                                            data-image="${img}"
+                                                            data-image="${optimizedImg}"
                                                             style="flex: 1; padding: 0.4rem 0.6rem; font-size: 0.8rem;">
                                                         <i class="fa-solid fa-plus"></i> Add
                                                     </button>
                                                     <button class="btn btn-primary btn-sm buy-now-btn" 
                                                             style="flex: 1.2; padding: 0.4rem 0.6rem; font-size: 0.8rem; background: var(--gradient-primary);"
-                                                            onclick="buyNow('dish-${item.id}', '${item.name.replace(/'/g, "\\'")}', ${item.price}, '${img}')">
+                                                            onclick="buyNow('dish-${item.id}', '${item.name.replace(/'/g, "\\'")}', ${item.price}, '${optimizedImg}')">
                                                         <i class="fa-solid fa-bolt"></i> Buy Now
                                                     </button>
                                                 </div>
@@ -298,41 +369,41 @@
                         name: "Pan-Seared Organic Salmon",
                         description: "Atlantic salmon fillet, fresh vegetables, creamy butter mash, and lemon herb sauce.",
                         price: 950,
-                        badge: "Healthy Choice",
+                        badge: "Best Seller",
                         category: "main",
                         image: "https://images.unsplash.com/photo-1467003909585-2f8a72700288?auto=format&fit=crop&q=80&w=600"
                     },
                     {
                         id: 3,
-                        name: "Black Truffle Margherita Pizza",
-                        description: "Thin crust pizza dough, buffalo mozzarella cheese, fresh basil leaves, and special truffle sauce.",
+                        name: "Classic Pepperoni Pizza",
+                        description: "Rich tomato marinara, mozzarella cheese, premium beef pepperoni, and dried oregano.",
                         price: 650,
-                        badge: "Chef's Special",
+                        badge: "Best Seller",
                         category: "main",
                         image: "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&q=80&w=600"
                     },
                     {
                         id: 4,
-                        name: "Sweet Italian Sausage & Stuffed Mushrooms",
-                        description: "Fresh cremini mushroom caps stuffed with aromatic herbs, cream cheese, and parmesan cheese.",
-                        price: 180,
+                        name: "Stuffed Garlic Mushrooms",
+                        description: "Fresh button mushrooms stuffed with herb garlic cream cheese, baked to golden crisp perfection.",
+                        price: 220,
                         badge: "Starter",
                         category: "appetizer",
                         image: "https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?auto=format&fit=crop&q=80&w=600"
                     },
                     {
                         id: 5,
-                        name: "Lava Chocolate Melt Cake",
-                        description: "Warm dark chocolate cake filled with molten chocolate inside, served with a scoop of premium vanilla bean gelato.",
-                        price: 220,
+                        name: "Rich Chocolate Lava Cake",
+                        description: "Warm molten chocolate center cake, served with a scoop of premium vanilla bean gelato.",
+                        price: 180,
                         badge: "Dessert",
                         category: "dessert",
                         image: "https://images.unsplash.com/photo-1606313564200-e75d5e30476c?auto=format&fit=crop&q=80&w=600"
                     },
                     {
                         id: 6,
-                        name: "Fresh Mango Smoothie",
-                        description: "Sweet Alphonso mango blended with fresh mint leaves, organic honey, and Greek yogurt.",
+                        name: "Tropical Mango Smoothie",
+                        description: "Blended fresh ripe honey mangoes, coconut milk, and splash of organic honey.",
                         price: 120,
                         badge: "Drink",
                         category: "drink",
@@ -340,31 +411,34 @@
                     }
                 ];
  
-                contentGrid.innerHTML = fallbackItems.map(item => `
-                    <div class="glass-panel glass-panel-interactive menu-card" data-category="${item.category}">
-                        <div class="menu-card-img-container">
-                            <span class="menu-card-badge">${item.badge}</span>
-                            <img src="${item.image}" alt="${item.name}" class="menu-card-img">
-                        </div>
-                        <div class="menu-card-body">
-                            <h3 class="menu-card-title">${item.name}</h3>
-                            <p class="menu-card-desc">${item.description}</p>
-                            <div class="menu-card-footer" style="flex-direction: column; align-items: stretch; gap: 0.75rem; border-top: 1px solid var(--border-color); padding-top: 1rem; width: 100%;">
-                                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                                    <span class="menu-card-price">Tk. ${item.price.toFixed(0)}</span>
-                                </div>
-                                <div style="display: flex; gap: 0.5rem; width: 100%;">
-                                    <button class="btn btn-secondary btn-sm add-to-cart-btn" data-id="dish-${item.id}" data-name="${item.name}" data-price="${item.price}" data-image="${item.image}" style="flex: 1; padding: 0.4rem 0.6rem; font-size: 0.8rem;">
-                                        <i class="fa-solid fa-plus"></i> Add
-                                    </button>
-                                    <button class="btn btn-primary btn-sm buy-now-btn" style="flex: 1.2; padding: 0.4rem 0.6rem; font-size: 0.8rem; background: var(--gradient-primary);" onclick="buyNow('dish-${item.id}', '${item.name.replace(/'/g, "\\'")}', ${item.price}, '${item.image}')">
-                                        <i class="fa-solid fa-bolt"></i> Buy Now
-                                    </button>
+                contentGrid.innerHTML = fallbackItems.map(item => {
+                    const optimizedImg = optimizeUnsplashUrl(item.image);
+                    return `
+                        <div class="glass-panel glass-panel-interactive menu-card" data-category="${item.category}">
+                            <div class="menu-card-img-container">
+                                <span class="menu-card-badge">${item.badge}</span>
+                                <img src="${optimizedImg}" alt="${item.name}" class="menu-card-img" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=60&w=450'">
+                            </div>
+                            <div class="menu-card-body">
+                                <h3 class="menu-card-title">${item.name}</h3>
+                                <p class="menu-card-desc">${item.description}</p>
+                                <div class="menu-card-footer" style="flex-direction: column; align-items: stretch; gap: 0.75rem; border-top: 1px solid var(--border-color); padding-top: 1rem; width: 100%;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                                        <span class="menu-card-price">Tk. ${item.price.toFixed(0)}</span>
+                                    </div>
+                                    <div style="display: flex; gap: 0.5rem; width: 100%;">
+                                        <button class="btn btn-secondary btn-sm add-to-cart-btn" data-id="dish-${item.id}" data-name="${item.name}" data-price="${item.price}" data-image="${optimizedImg}" style="flex: 1; padding: 0.4rem 0.6rem; font-size: 0.8rem;">
+                                            <i class="fa-solid fa-plus"></i> Add
+                                        </button>
+                                        <button class="btn btn-primary btn-sm buy-now-btn" style="flex: 1.2; padding: 0.4rem 0.6rem; font-size: 0.8rem; background: var(--gradient-primary);" onclick="buyNow('dish-${item.id}', '${item.name.replace(/'/g, "\\'")}', ${item.price}, '${optimizedImg}')">
+                                            <i class="fa-solid fa-bolt"></i> Buy Now
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                `).join('');
+                    `;
+                }).join('');
             } finally {
                 // Dimiss skeletons and trigger entrance stagger
                 if (loaders) loaders.style.display = 'none';
@@ -480,9 +554,9 @@
         }
 
         // Trigger on load
-        window.addEventListener('load', () => {
+        window.addEventListener('load', async () => {
+            await loadCategories();
             setTimeout(loadCatalogMenu, 800); // 800ms buffer for elegant loading skeleton preview
-            initCategoryFilters();
             
             // Add scroll listeners for assembly
             window.addEventListener('scroll', handleBurgerScroll);

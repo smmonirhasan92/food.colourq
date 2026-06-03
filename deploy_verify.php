@@ -66,6 +66,41 @@ try {
         }
     }
 
+    // Category Migration: Create menu_categories table
+    if (DB_TYPE === 'sqlite') {
+        $db->exec("CREATE TABLE IF NOT EXISTS menu_categories (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name VARCHAR(50) NOT NULL UNIQUE,
+            slug VARCHAR(50) NOT NULL UNIQUE,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )");
+        
+        $catCount = $db->query("SELECT COUNT(*) FROM menu_categories")->fetchColumn();
+        if ($catCount == 0) {
+            $db->exec("INSERT INTO menu_categories (name, slug) VALUES 
+                ('Starter', 'appetizer'),
+                ('Best Seller', 'main'),
+                ('Dessert', 'dessert'),
+                ('Drink', 'drink')");
+        }
+    } else {
+        $db->exec("CREATE TABLE IF NOT EXISTS menu_categories (
+            id INT PRIMARY KEY AUTO_INCREMENT,
+            name VARCHAR(50) NOT NULL UNIQUE,
+            slug VARCHAR(50) NOT NULL UNIQUE,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )");
+        
+        $catCount = $db->query("SELECT COUNT(*) FROM menu_categories")->fetchColumn();
+        if ($catCount == 0) {
+            $db->exec("INSERT INTO menu_categories (name, slug) VALUES 
+                ('Starter', 'appetizer'),
+                ('Best Seller', 'main'),
+                ('Dessert', 'dessert'),
+                ('Drink', 'drink')");
+        }
+    }
+
     // Fetch all tables in MySQL
     $tablesQuery = $db->query("SHOW TABLES");
     $tables = $tablesQuery->fetchAll(PDO::FETCH_COLUMN);

@@ -1,3 +1,10 @@
+<?php
+session_start();
+if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
+    header("Location: login.php");
+    exit;
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -47,9 +54,12 @@
                 </a>
             </nav>
 
-            <div class="sidebar-footer">
-                <a href="../customer/index.php" class="sidebar-link" style="opacity: 0.9;">
+            <div class="sidebar-footer" style="display: flex; flex-direction: column; gap: 0.5rem; padding: 1rem 1.5rem;">
+                <a href="../customer/index.php" class="sidebar-link" style="padding: 0.5rem 0; opacity: 0.9;">
                     <i class="fa-solid fa-arrow-right-to-bracket"></i> Customer Portal
+                </a>
+                <a href="logout.php" class="sidebar-link" style="padding: 0.5rem 0; color: #ef4444 !important; opacity: 0.9;">
+                    <i class="fa-solid fa-sign-out-alt"></i> Log Out
                 </a>
             </div>
         </aside>

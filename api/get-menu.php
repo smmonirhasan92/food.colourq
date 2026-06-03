@@ -27,27 +27,45 @@ try {
     $stmt = $db->query($query);
     $items = $stmt->fetchAll();
 
-    // Categorize items
-    $categorized = [
-        'appetizer' => [],
-        'main' => [],
-        'dessert' => [],
-        'drink' => []
-    ];
-
-    // Map database categories to standard storefront keys
-    $categoryMap = [
-        'appetizer' => 'appetizer',
-        'main' => 'main',
-        'dessert' => 'dessert',
-        'drink' => 'drink'
-    ];
+    // Categorize items dynamically
+    $categorized = [];
+    $categoryMap = [];
+    
+    try {
+        $categoriesStmt = $db->query("SELECT slug FROM menu_categories ORDER BY id ASC");
+        $categories = $categoriesStmt->fetchAll();
+        
+        foreach ($categories as $cat) {
+            $slug = trim($cat['slug']);
+            $categorized[$slug] = [];
+            $categoryMap[$slug] = $slug;
+        }
+    } catch (Exception $e) {
+        // Fallback to defaults if table doesn't exist
+        $categorized = [
+            'appetizer' => [],
+            'main' => [],
+            'dessert' => [],
+            'drink' => []
+        ];
+        $categoryMap = [
+            'appetizer' => 'appetizer',
+            'main' => 'main',
+            'dessert' => 'dessert',
+            'drink' => 'drink'
+        ];
+    }
 
     foreach ($items as $item) {
         $category = trim($item['category']);
         
-        // Find mapped category, fallback to appetizer if unknown
-        $targetCategory = isset($categoryMap[$category]) ? $categoryMap[$category] : 'appetizer';
+        // Find mapped category, fallback to appetizer/first category if unknown
+        $targetCategory = isset($categoryMap[$category]) ? $categoryMap[$category] : (empty($categoryMap) ? 'appetizer' : array_key_first($categoryMap));
+        
+        // Ensure initialized array
+        if (!isset($categorized[$targetCategory])) {
+            $categorized[$targetCategory] = [];
+        }
         
         $categorized[$targetCategory][] = [
             'id' => (int)$item['id'],

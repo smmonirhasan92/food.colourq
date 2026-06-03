@@ -1,3 +1,10 @@
+<?php
+session_start();
+if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
+    header("Location: login.php");
+    exit;
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -46,9 +53,12 @@
                 </a>
             </nav>
 
-            <div class="sidebar-footer">
-                <a href="../customer/index.php" class="sidebar-link">
+            <div class="sidebar-footer" style="display: flex; flex-direction: column; gap: 0.5rem; padding: 1rem 1.5rem;">
+                <a href="../customer/index.php" class="sidebar-link" style="padding: 0.5rem 0; opacity: 0.9;">
                     <i class="fa-solid fa-arrow-right-to-bracket"></i> Customer Portal
+                </a>
+                <a href="logout.php" class="sidebar-link" style="padding: 0.5rem 0; color: #ef4444 !important; opacity: 0.9;">
+                    <i class="fa-solid fa-sign-out-alt"></i> Log Out
                 </a>
             </div>
         </aside>
@@ -73,8 +83,13 @@
                 
                 <!-- Add New Item Form -->
                 <section class="glass-panel" style="padding: 2rem; position: sticky; top: 2rem; background-color: var(--bg-dark-surface); border: 1px solid var(--border-color);">
-                    <h3 style="font-family: var(--font-heading); font-size: 1.25rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem; color: var(--text-primary);">
-                        <i class="fa-solid fa-plus-circle" style="color: var(--primary);"></i> Add Gourmet Dish
+                    <h3 style="font-family: var(--font-heading); font-size: 1.25rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; color: var(--text-primary);">
+                        <span style="display: flex; align-items: center; gap: 0.5rem;">
+                            <i class="fa-solid fa-plus-circle" style="color: var(--primary);"></i> Add Gourmet Dish
+                        </span>
+                        <button type="button" class="btn btn-glass btn-sm" onclick="openCategoriesModal()" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; font-weight: 600; border-color: rgba(234, 103, 33, 0.3); color: var(--primary); width: auto;">
+                            <i class="fa-solid fa-tags"></i> Manage Categories
+                        </button>
                     </h3>
 
                     <form id="add-dish-form" onsubmit="handleNewDishSubmit(event)">
@@ -91,10 +106,10 @@
                             <div class="form-group">
                                 <label class="form-label" for="dish-category">Category</label>
                                 <select class="form-input form-select" id="dish-category">
-                                    <option value="Hot Starters">Hot Starters</option>
-                                    <option value="Gourmet Mains" selected>Gourmet Mains</option>
-                                    <option value="Organic Bowls">Organic Bowls</option>
-                                    <option value="Desserts">Desserts</option>
+                                    <option value="appetizer">Starter</option>
+                                    <option value="main" selected>Best Seller</option>
+                                    <option value="dessert">Dessert</option>
+                                    <option value="drink">Drink</option>
                                 </select>
                             </div>
                         </div>
@@ -206,13 +221,6 @@
                 return;
             }
 
-            const categoryMap = {
-                'appetizer': 'Hot Starters',
-                'main': 'Gourmet Mains',
-                'dessert': 'Desserts',
-                'drink': 'Drinks'
-            };
-
             const categoryColors = {
                 'appetizer': 'var(--gradient-primary)',
                 'main': 'var(--gradient-success)',
@@ -221,8 +229,9 @@
             };
 
             grid.innerHTML = items.map(item => {
-                const displayCategory = categoryMap[item.category] || item.category;
-                const bgStyle = categoryColors[item.category] || 'var(--gradient-success)';
+                const catObj = categoriesCache.find(c => c.slug === item.category);
+                const displayCategory = catObj ? catObj.name : item.category;
+                const bgStyle = categoryColors[item.category] || 'linear-gradient(135deg, #8b5cf6, #6d28d9)';
                 const opacity = item.is_available === 1 ? '1' : '0.4';
                 const buttonText = item.is_available === 1 ? 'Disable' : 'Enable';
                 const buttonIcon = item.is_available === 1 ? 'fa-eye-slash' : 'fa-eye';
@@ -448,7 +457,172 @@
             }
         }
 
-        window.addEventListener('load', fetchMenuItems);
+        let categoriesCache = [];
+
+        async function fetchCategories() {
+            try {
+                const response = await fetch('../api/get-categories.php');
+                const result = await response.json();
+                if (result.success && result.data) {
+                    categoriesCache = result.data;
+                    populateCategoryDropdown(result.data);
+                    renderCategoriesList(result.data);
+                }
+            } catch (error) {
+                console.error('Error fetching categories:', error);
+            }
+        }
+
+        function populateCategoryDropdown(categories) {
+            const select = document.getElementById('dish-category');
+            if (!select) return;
+            
+            select.innerHTML = categories.map(cat => {
+                return `<option value="${cat.slug}">${cat.name}</option>`;
+            }).join('');
+        }
+
+        function renderCategoriesList(categories) {
+            const ul = document.getElementById('categories-list-ul');
+            if (!ul) return;
+
+            const systemDefaults = ['appetizer', 'main', 'dessert', 'drink'];
+
+            if (categories.length === 0) {
+                ul.innerHTML = `<li style="padding: 1rem; text-align: center; color: var(--text-muted);">No categories available.</li>`;
+                return;
+            }
+
+            ul.innerHTML = categories.map(cat => {
+                const isDefault = systemDefaults.includes(cat.slug);
+                const deleteBtn = isDefault ? 
+                    `<span style="font-size: 0.75rem; color: var(--text-muted); font-style: italic;">System Default</span>` :
+                    `<button type="button" class="btn btn-glass btn-sm" onclick="deleteCategory('${cat.slug}')" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; border-color: rgba(239,68,68,0.3); color: var(--danger); width: auto;">
+                        <i class="fa-solid fa-trash"></i> Delete
+                     </button>`;
+
+                return `
+                    <li style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border-color); color: var(--text-primary);">
+                        <span style="font-weight: 500;">${cat.name} <span style="font-size: 0.75rem; color: var(--text-muted);">(${cat.slug})</span></span>
+                        ${deleteBtn}
+                    </li>
+                `;
+            }).join('');
+        }
+
+        function openCategoriesModal() {
+            const modal = document.getElementById('categories-modal');
+            if (modal) modal.classList.add('active');
+        }
+
+        function closeCategoriesModal() {
+            const modal = document.getElementById('categories-modal');
+            if (modal) modal.classList.remove('active');
+        }
+
+        async function handleAddCategory(e) {
+            e.preventDefault();
+            const input = document.getElementById('new-category-name');
+            const name = input.value.trim();
+            if (!name) return;
+
+            try {
+                const response = await fetch('../api/add-category.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: name })
+                });
+                const result = await response.json();
+                if (result.success) {
+                    if (window.NotificationSystem) {
+                        window.NotificationSystem.toast('success', 'Category Created', `Successfully added '${name}'.`);
+                    }
+                    input.value = '';
+                    fetchCategories();
+                } else {
+                    throw new Error(result.message || 'Failed to add category');
+                }
+            } catch (error) {
+                console.error(error);
+                if (window.NotificationSystem) {
+                    window.NotificationSystem.toast('error', 'Action Failed', error.message || 'Error occurred while saving category.');
+                }
+            }
+        }
+
+        async function deleteCategory(slug) {
+            if (!confirm('Are you sure you want to delete this category? All items under it will be moved to Starter.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch('../api/delete-category.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ slug: slug })
+                });
+                const result = await response.json();
+                if (result.success) {
+                    if (window.NotificationSystem) {
+                        window.NotificationSystem.toast('success', 'Category Deleted', 'The category has been removed.');
+                    }
+                    await fetchCategories();
+                    fetchMenuItems();
+                } else {
+                    throw new Error(result.message || 'Failed to delete category');
+                }
+            } catch (error) {
+                console.error(error);
+                if (window.NotificationSystem) {
+                    window.NotificationSystem.toast('error', 'Action Failed', error.message || 'Error occurred while deleting category.');
+                }
+            }
+        }
+
+        window.addEventListener('load', async () => {
+            await fetchCategories();
+            await fetchMenuItems();
+        });
     </script>
+
+    <!-- Categories Modal -->
+    <div id="categories-modal" class="modal-overlay" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 1000; align-items: center; justify-content: center;">
+        <div class="glass-panel" style="width: 100%; max-width: 480px; padding: 2rem; background-color: var(--bg-dark-surface); border: 1px solid var(--border-color); position: relative; animation: modalFadeIn 0.3s ease;">
+            <button type="button" onclick="closeCategoriesModal()" style="position: absolute; top: 1.25rem; right: 1.25rem; background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.2rem;">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <h3 style="font-family: var(--font-heading); font-size: 1.25rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; color: var(--text-primary); display: flex; align-items: center; gap: 0.5rem;">
+                <i class="fa-solid fa-tags" style="color: var(--primary);"></i> Manage Categories
+            </h3>
+            
+            <!-- Add Category Inline Form -->
+            <form id="add-category-form" onsubmit="handleAddCategory(event)" style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem;">
+                <input class="form-input" type="text" id="new-category-name" required placeholder="Category name (e.g. Pizza)" style="flex: 1; margin: 0; background-color: rgba(15, 23, 42, 0.5); border: 1px solid rgba(255, 255, 255, 0.08); color: white;">
+                <button type="submit" class="btn btn-primary" style="padding: 0.85rem 1.25rem; width: auto;">
+                    <i class="fa-solid fa-plus"></i> Add
+                </button>
+            </form>
+
+            <!-- Categories List -->
+            <div style="max-height: 250px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 0.5rem;">
+                <ul id="categories-list-ul" style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.5rem;">
+                    <!-- Dynamically populated -->
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <style>
+    @keyframes modalFadeIn {
+        from { opacity: 0; transform: scale(0.95); }
+        to { opacity: 1; transform: scale(1); }
+    }
+    .modal-overlay {
+        display: none !important;
+    }
+    .modal-overlay.active {
+        display: flex !important;
+    }
+    </style>
 </body>
 </html>
