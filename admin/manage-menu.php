@@ -41,6 +41,9 @@
                 <a href="manage-menu.php" class="sidebar-link active">
                     <i class="fa-solid fa-pizza-slice"></i> Culinary Menu
                 </a>
+                <a href="manage-riders.php" class="sidebar-link">
+                    <i class="fa-solid fa-motorcycle"></i> Delivery Riders
+                </a>
             </nav>
 
             <div class="sidebar-footer">

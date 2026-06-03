@@ -161,6 +161,18 @@
                 <div style="text-align: center; margin-top: 2.5rem; color: var(--text-secondary);" id="status-detailed-description">
                     Your order has been received in our kitchen and is currently awaiting approval.
                 </div>
+
+                <!-- Rider Information Card -->
+                <div id="rider-info-panel" style="display: none; margin-top: 2rem; padding: 1.25rem; background: rgba(234, 103, 33, 0.04); border: 1px dashed var(--border-color); border-radius: var(--radius-md); text-align: center; max-width: 420px; margin-left: auto; margin-right: auto; align-items: center; justify-content: center; gap: 1rem; box-shadow: var(--shadow-sm); animation: fadeIn 0.5s ease;">
+                    <div style="width: 50px; height: 50px; background: rgba(234, 103, 33, 0.08); color: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0;">
+                        <i class="fa-solid fa-motorcycle"></i>
+                    </div>
+                    <div style="text-align: left;">
+                        <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">Assigned Delivery Rider</div>
+                        <div style="font-weight: 600; color: var(--text-primary); font-size: 1.05rem;" id="rider-info-name">Rider Name</div>
+                        <div style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 0.15rem;" id="rider-info-phone">Phone: 017XXXXXXXX</div>
+                    </div>
+                </div>
             </section>
 
             <!-- Quality Dispute & Feedback Section -->
@@ -299,7 +311,7 @@
             4: "Enjoy your premium delicious meal!"
         };
 
-        function setTrackingState(step, orderNum = activeOrderNumber, triggerAlert = true) {
+        function setTrackingState(step, orderNum = activeOrderNumber, triggerAlert = true, status = '') {
             currentStep = step;
             activeOrderNumber = orderNum;
 
@@ -351,7 +363,11 @@
             // Update description box
             const descEl = document.getElementById('status-detailed-description');
             if (descEl) {
-                descEl.textContent = descriptions[step];
+                if (status === 'ready') {
+                    descEl.innerHTML = `<span style="color: #06b6d4; font-weight: 600;"><i class="fa-solid fa-cookie-bite"></i> Your food is ready! We are assigning a delivery rider now.</span>`;
+                } else {
+                    descEl.textContent = descriptions[step];
+                }
             }
 
             // Show/Hide Completed actions (Feedback / Dispute panel)
@@ -421,8 +437,25 @@
                     
                     let step = 1;
                     if (status === 'preparing') step = 2;
-                    else if (status === 'ready' || status === 'delivering') step = 3;
+                    else if (status === 'ready') step = 2;
+                    else if (status === 'delivering') step = 3;
                     else if (status === 'delivered') step = 4;
+
+                    // Update Rider Info Card if assigned
+                    const riderPanel = document.getElementById('rider-info-panel');
+                    const riderName = document.getElementById('rider-info-name');
+                    const riderPhone = document.getElementById('rider-info-phone');
+                    if (order.delivery_man_name) {
+                        if (riderPanel && riderName && riderPhone) {
+                            riderName.textContent = order.delivery_man_name;
+                            riderPhone.textContent = `Phone: ${order.delivery_man_phone || 'N/A'}`;
+                            riderPanel.style.display = 'flex';
+                        }
+                    } else {
+                        if (riderPanel) {
+                            riderPanel.style.display = 'none';
+                        }
+                    }
                     
                     // Update connection indicator if visible
                     const indicator = document.querySelector('.realtime-indicator');
@@ -457,7 +490,7 @@
                         if (status === 'cancelled') {
                             simulateCancellation(activeOrderNumber);
                         } else {
-                            setTrackingState(step, activeOrderNumber, lastKnownStatus !== null);
+                            setTrackingState(step, activeOrderNumber, lastKnownStatus !== null, status);
                         }
                         lastKnownStatus = status;
                     }

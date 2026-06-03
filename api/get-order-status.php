@@ -33,9 +33,11 @@ try {
                o.created_at, o.confirmed_at, o.prepared_at, o.delivered_at,
                o.dispute_status, o.dispute_category, o.dispute_description, o.dispute_reported_at,
                o.feedback_rating, o.feedback_comment,
-               u.username, u.email
+               u.username, u.email,
+               d.name AS delivery_man_name, d.phone AS delivery_man_phone
         FROM orders o
         JOIN users u ON o.user_id = u.id
+        LEFT JOIN delivery_men d ON o.delivery_man_id = d.id
         WHERE o.order_number = ?
         LIMIT 1
     ");
@@ -88,6 +90,8 @@ try {
         'dispute_reported_at' => $order['dispute_reported_at'],
         'feedback_rating' => $order['feedback_rating'] !== null ? (int)$order['feedback_rating'] : null,
         'feedback_comment' => $order['feedback_comment'],
+        'delivery_man_name' => $order['delivery_man_name'],
+        'delivery_man_phone' => $order['delivery_man_phone'],
         'customer' => [
             'username' => $order['username'],
             'email' => $order['email']

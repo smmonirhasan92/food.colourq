@@ -41,6 +41,9 @@
                 <a href="manage-menu.php" class="sidebar-link">
                     <i class="fa-solid fa-pizza-slice"></i> Culinary Menu
                 </a>
+                <a href="manage-riders.php" class="sidebar-link">
+                    <i class="fa-solid fa-motorcycle"></i> Delivery Riders
+                </a>
             </nav>
 
             <div class="sidebar-footer">
@@ -146,8 +149,8 @@
                                 </td>
                                 <td data-label="Actions Control">
                                     <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                                        <button class="btn btn-primary btn-sm" onclick="advanceOrderStatus(2)">
-                                            Deliver <i class="fa-solid fa-truck"></i>
+                                        <button class="btn btn-success btn-sm" onclick="advanceOrderStatus(2)" style="background: #10b981; border-color: #10b981; color: white;">
+                                            Ready <i class="fa-solid fa-pizza-slice"></i>
                                         </button>
                                         <button class="btn btn-glass btn-sm" onclick="cancelOrder(2)">
                                             Cancel
@@ -295,7 +298,8 @@
 
         function getNextStatus(current) {
             if (current === 'pending') return 'preparing';
-            if (current === 'preparing') return 'delivering';
+            if (current === 'preparing') return 'ready';
+            if (current === 'ready') return 'delivering';
             if (current === 'delivering') return 'completed';
             return 'completed';
         }
@@ -324,6 +328,18 @@
                 `;
             } else if (status === 'preparing') {
                 buttonsHtml = `
+                    <button class="btn btn-success btn-sm" onclick="updateOrderStatus('${orderNum}', 'ready', ${orderId})" title="Mark order as ready in kitchen" style="background: #10b981; border-color: #10b981; color: white;">
+                        Ready <i class="fa-solid fa-pizza-slice"></i>
+                    </button>
+                    <button class="btn btn-glass btn-sm" onclick="updateOrderStatus('${orderNum}', 'cancelled', ${orderId})">
+                        Cancel
+                    </button>
+                    <button class="btn btn-secondary btn-sm" onclick="ringStatusAlarm('${currentStatus}')">
+                        <i class="fa-solid fa-volume-high"></i> Ring
+                    </button>
+                `;
+            } else if (status === 'ready') {
+                buttonsHtml = `
                     <button class="btn btn-primary btn-sm" onclick="openAssignRiderModal('${orderNum}', ${orderId})" title="Send order out for delivery">
                         Deliver <i class="fa-solid fa-truck"></i>
                     </button>
@@ -334,7 +350,7 @@
                         <i class="fa-solid fa-volume-high"></i> Ring
                     </button>
                 `;
-            } else if (status === 'delivering' || status === 'ready') {
+            } else if (status === 'delivering') {
                 buttonsHtml = `
                     <button class="btn btn-success btn-sm" onclick="updateOrderStatus('${orderNum}', 'delivered', ${orderId})" title="Mark order as completed">
                         Complete <i class="fa-solid fa-circle-check"></i>
