@@ -646,21 +646,24 @@
             }
 
             previewContainer.innerHTML = items.map(item => `
-                <div style="display: flex; justify-content: space-between; align-items: center; gap: 1.25rem; padding-bottom: 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 1.25rem; padding-bottom: 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.05); margin-bottom: 0.5rem;">
                     <div style="display: flex; align-items: center; gap: 0.75rem;">
-                        <img src="${item.image}" alt="${item.name}" style="width: 45px; height: 45px; border-radius: var(--radius-sm); object-fit: cover; border: 1px solid rgba(255,255,255,0.08);">
+                        <img src="${item.image}" alt="${item.name}" style="width: 50px; height: 50px; border-radius: var(--radius-md); object-fit: cover; border: 1px solid rgba(255,255,255,0.08);">
                         <div>
-                            <div style="font-weight: 600; font-size: 0.85rem; color: var(--text-primary); max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${item.name}</div>
+                            <div style="font-weight: 700; font-size: 0.9rem; color: var(--text-primary); max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${item.name}</div>
                             <div style="font-size: 0.75rem; color: var(--primary); font-weight: 600; margin-top: 0.15rem;">Tk. ${item.price.toFixed(0)} each</div>
                         </div>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 0.75rem;">
-                        <div style="display: flex; align-items: center; gap: 0.35rem; background: rgba(15, 23, 42, 0.4); border: 1px solid rgba(255,255,255,0.08); padding: 0.2rem; border-radius: 8px;">
-                            <button type="button" class="qty-btn btn-modal-minus" data-id="${item.id}" style="width: 24px; height: 24px; border-radius: 6px; border: none; background: rgba(255,255,255,0.05); color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.9rem; transition: all 0.2s;">-</button>
-                            <span style="font-weight: 700; font-size: 0.85rem; color: white; min-width: 18px; text-align: center;">${item.quantity}</span>
-                            <button type="button" class="qty-btn btn-modal-plus" data-id="${item.id}" style="width: 24px; height: 24px; border-radius: 6px; border: none; background: rgba(255,255,255,0.05); color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.9rem; transition: all 0.2s;">+</button>
+                    <div style="display: flex; align-items: center; gap: 1.25rem;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary);">Qty:</span>
+                            <div style="display: flex; align-items: center; gap: 0.35rem; background: rgba(234, 103, 33, 0.04); border: 1px solid rgba(234, 103, 33, 0.25); padding: 0.2rem; border-radius: 8px;">
+                                <button type="button" class="qty-btn btn-modal-minus" data-id="${item.id}" style="width: 26px; height: 26px; border-radius: 6px; border: none; background: rgba(234, 103, 33, 0.12); color: var(--primary); cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1rem; transition: all 0.2s;">-</button>
+                                <span style="font-weight: 800; font-size: 0.95rem; color: white; min-width: 20px; text-align: center;">${item.quantity}</span>
+                                <button type="button" class="qty-btn btn-modal-plus" data-id="${item.id}" style="width: 26px; height: 26px; border-radius: 6px; border: none; background: var(--primary); color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1rem; transition: all 0.2s;">+</button>
+                            </div>
                         </div>
-                        <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-primary); min-width: 60px; text-align: right;">Tk. ${(item.price * item.quantity).toFixed(0)}</span>
+                        <span style="font-size: 0.95rem; font-weight: 800; color: var(--text-primary); min-width: 70px; text-align: right;">Tk. ${(item.price * item.quantity).toFixed(0)}</span>
                     </div>
                 </div>
             `).join('');
@@ -747,15 +750,12 @@
                     </div>
                 </div>
 
-                <div class="form-group" style="margin-bottom: 1rem;">
+                <div class="form-group" style="margin-bottom: 1.5rem;">
                     <label class="form-label" for="cust-addr">Delivery Address</label>
                     <input class="form-input" type="text" id="cust-addr" name="delivery_address" required placeholder="House No, Road No, Area / Landmark" style="padding: 0.75rem 1rem;">
                 </div>
 
-                <div class="form-group" style="margin-bottom: 1.25rem;">
-                    <label class="form-label" for="cust-notes">Delivery Instructions (Optional)</label>
-                    <textarea class="form-input" id="cust-notes" name="delivery_notes" rows="2" placeholder="e.g., Ring bell, leave package at the gate..." style="resize: vertical; min-height: 60px; padding: 0.75rem 1rem;"></textarea>
-                </div>
+                <input type="hidden" name="delivery_notes" value="">
 
                 <h4 style="font-size: 1.1rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; color: var(--text-primary);">
                     <i class="fa-solid fa-credit-card" style="color: var(--primary);"></i> Payment Details
