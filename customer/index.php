@@ -492,31 +492,34 @@
             });
 
             if (topBun) {
-                const y = -35 * (1 - progress);
+                const y = -220 * (1 - progress);
                 topBun.style.transform = `translateY(${y}px)`;
             }
             if (tomato) {
-                const x = -20 * (1 - progress);
-                const rot = -5 * (1 - progress);
-                tomato.style.transform = `translateX(${x}px) rotate(${rot}deg)`;
+                const y = -140 * (1 - progress);
+                const x = -30 * (1 - progress);
+                const rot = -15 * (1 - progress);
+                tomato.style.transform = `translateY(${y}px) translateX(${x}px) rotate(${rot}deg)`;
             }
             if (cheese) {
-                const scale = 0.9 + 0.1 * progress;
-                const y = -10 * (1 - progress);
+                const scale = 0.85 + 0.15 * progress;
+                const y = -70 * (1 - progress);
                 cheese.style.transform = `scale(${scale}) translateY(${y}px)`;
             }
             if (patty) {
-                const x = 15 * (1 - progress);
-                const rot = 5 * (1 - progress);
-                patty.style.transform = `translateX(${x}px) rotate(${rot}deg)`;
+                const y = 10 * (1 - progress);
+                const x = 25 * (1 - progress);
+                const rot = 10 * (1 - progress);
+                patty.style.transform = `translateY(${y}px) translateX(${x}px) rotate(${rot}deg)`;
             }
             if (lettuce) {
-                const x = -15 * (1 - progress);
-                const rot = -6 * (1 - progress);
-                lettuce.style.transform = `translateX(${x}px) rotate(${rot}deg)`;
+                const y = 80 * (1 - progress);
+                const x = -25 * (1 - progress);
+                const rot = -10 * (1 - progress);
+                lettuce.style.transform = `translateY(${y}px) translateX(${x}px) rotate(${rot}deg)`;
             }
             if (bottomBun) {
-                const y = 20 * (1 - progress);
+                const y = 160 * (1 - progress);
                 bottomBun.style.transform = `translateY(${y}px)`;
             }
         }
