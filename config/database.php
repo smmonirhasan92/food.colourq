@@ -43,6 +43,7 @@ class Database {
                 } else {
                     self::$instance = self::connectMySQL();
                 }
+                self::runAutoMigrations(self::$instance);
             } catch (PDOException $e) {
                 // In production, log the error and show a generic message.
                 // In development, show the detailed error.
@@ -200,6 +201,110 @@ class Database {
 
             // Execute the query
             $pdo->exec($query);
+        }
+    }
+
+    /**
+     * Run all incremental database migrations to ensure compatibility
+     */
+    private static function runAutoMigrations(PDO $db): void {
+        try {
+            $dbType = DB_TYPE;
+            
+            // 1. Ensure delivery_men table exists
+            if ($dbType === 'sqlite') {
+                $db->exec("CREATE TABLE IF NOT EXISTS delivery_men (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name VARCHAR(100) NOT NULL,
+                    phone VARCHAR(20) NOT NULL,
+                    status VARCHAR(20) DEFAULT 'available',
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )");
+                
+                $dmCount = $db->query("SELECT COUNT(*) FROM delivery_men")->fetchColumn();
+                if ($dmCount == 0) {
+                    $db->exec("INSERT INTO delivery_men (name, phone, status) VALUES 
+                        ('Rahat Khan', '01712345678', 'available'),
+                        ('Sumon Mia', '01812345678', 'available'),
+                        ('Kamal Hossain', '01912345678', 'available')");
+                }
+                
+                // Ensure delivery_man_id column exists on orders
+                $colCheck = $db->query("PRAGMA table_info(orders)")->fetchAll(PDO::FETCH_COLUMN, 1);
+                if (!in_array('delivery_man_id', $colCheck)) {
+                    $db->exec("ALTER TABLE orders ADD COLUMN delivery_man_id INTEGER NULL");
+                }
+                
+                // Ensure cost_price column exists on menu_items
+                $colCheckMenu = $db->query("PRAGMA table_info(menu_items)")->fetchAll(PDO::FETCH_COLUMN, 1);
+                if (!in_array('cost_price', $colCheckMenu)) {
+                    $db->exec("ALTER TABLE menu_items ADD COLUMN cost_price DECIMAL(10, 2) NOT NULL DEFAULT 0.00");
+                }
+                
+                // Ensure menu_categories table exists
+                $db->exec("CREATE TABLE IF NOT EXISTS menu_categories (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name VARCHAR(50) NOT NULL UNIQUE,
+                    slug VARCHAR(50) NOT NULL UNIQUE,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )");
+                
+                $catCount = $db->query("SELECT COUNT(*) FROM menu_categories")->fetchColumn();
+                if ($catCount == 0) {
+                    $db->exec("INSERT INTO menu_categories (name, slug) VALUES 
+                        ('Starter', 'appetizer'),
+                        ('Best Seller', 'main'),
+                        ('Dessert', 'dessert'),
+                        ('Drink', 'drink')");
+                }
+            } else {
+                // MySQL Migrations
+                $db->exec("CREATE TABLE IF NOT EXISTS delivery_men (
+                    id INT PRIMARY KEY AUTO_INCREMENT,
+                    name VARCHAR(100) NOT NULL,
+                    phone VARCHAR(20) NOT NULL,
+                    status VARCHAR(20) DEFAULT 'available',
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )");
+                
+                $dmCount = $db->query("SELECT COUNT(*) FROM delivery_men")->fetchColumn();
+                if ($dmCount == 0) {
+                    $db->exec("INSERT INTO delivery_men (name, phone, status) VALUES 
+                        ('Rahat Khan', '01712345678', 'available'),
+                        ('Sumon Mia', '01812345678', 'available'),
+                        ('Kamal Hossain', '01912345678', 'available')");
+                }
+                
+                $colsQuery = $db->query("SHOW COLUMNS FROM orders LIKE 'delivery_man_id'");
+                $colExists = $colsQuery->fetch();
+                if (!$colExists) {
+                    $db->exec("ALTER TABLE orders ADD COLUMN delivery_man_id INT NULL");
+                }
+                
+                $colsQueryMenu = $db->query("SHOW COLUMNS FROM menu_items LIKE 'cost_price'");
+                $colExistsMenu = $colsQueryMenu->fetch();
+                if (!$colExistsMenu) {
+                    $db->exec("ALTER TABLE menu_items ADD COLUMN cost_price DECIMAL(10, 2) NOT NULL DEFAULT 0.00");
+                }
+                
+                $db->exec("CREATE TABLE IF NOT EXISTS menu_categories (
+                    id INT PRIMARY KEY AUTO_INCREMENT,
+                    name VARCHAR(50) NOT NULL UNIQUE,
+                    slug VARCHAR(50) NOT NULL UNIQUE,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )");
+                
+                $catCount = $db->query("SELECT COUNT(*) FROM menu_categories")->fetchColumn();
+                if ($catCount == 0) {
+                    $db->exec("INSERT INTO menu_categories (name, slug) VALUES 
+                        ('Starter', 'appetizer'),
+                        ('Best Seller', 'main'),
+                        ('Dessert', 'dessert'),
+                        ('Drink', 'drink')");
+                }
+            }
+        } catch (Exception $e) {
+            error_log("Database auto-migration warning: " . $e->getMessage());
         }
     }
 }
