@@ -947,32 +947,38 @@
 
             // Generate thermal layout
             let itemsHtml = '';
+            let subtotal = 0;
             if (Array.isArray(order.items)) {
-                itemsHtml = order.items.map(item => `
-                    <tr>
-                        <td>${item.quantity}x ${item.item_name || item.name}</td>
-                        <td class="text-right">Tk. ${(item.price * item.quantity).toFixed(0)}</td>
-                    </tr>
-                `).join('');
+                itemsHtml = order.items.map(item => {
+                    const itemCost = parseFloat(item.price) * parseInt(item.quantity);
+                    subtotal += itemCost;
+                    return `
+                        <tr>
+                            <td>${item.quantity}x ${item.item_name || item.name}</td>
+                            <td class="text-right">Tk. ${itemCost.toFixed(0)}</td>
+                        </tr>
+                    `;
+                }).join('');
             } else {
+                subtotal = parseFloat(order.total_price) - 60 - ((parseFloat(order.total_price) - 60) * 0.05);
                 itemsHtml = `
                     <tr>
                         <td>${order.items_summary || order.items || 'Gourmet Selection'}</td>
-                        <td class="text-right">Tk. ${parseFloat(order.total_price).toFixed(0)}</td>
+                        <td class="text-right">Tk. ${subtotal.toFixed(0)}</td>
                     </tr>
                 `;
             }
 
-            const tax = order.total_price * 0.05; // 5% tax
+            const tax = subtotal * 0.05; // 5% tax
             const deliveryFee = 60.00;
-            const subtotal = order.total_price - tax - deliveryFee;
+            const total = parseFloat(order.total_price) || (subtotal + tax + deliveryFee);
 
             const receiptHtml = `
                 <div class="receipt-wrapper">
                     <div class="receipt-header">
                         <div class="receipt-logo">FOOD COLOURQ</div>
                         <div class="receipt-sub">Premium Delivery Service</div>
-                        <div class="receipt-sub">Web: foodcolourq.local</div>
+                        <div class="receipt-sub">Web: food.colourq.com.bd</div>
                     </div>
                     <div class="receipt-divider"></div>
                     <div class="receipt-title">Order Ticket</div>
@@ -991,6 +997,20 @@
                             <td><strong>Customer:</strong></td>
                             <td style="text-align: right;">${order.username || order.customer_name || 'Client'}</td>
                         </tr>
+                        <tr>
+                            <td><strong>Phone:</strong></td>
+                            <td style="text-align: right;">${order.phone || 'N/A'}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Address:</strong></td>
+                            <td style="text-align: right; word-break: break-word; max-width: 150px;">${order.delivery_address || 'N/A'}</td>
+                        </tr>
+                        ${order.delivery_man_name ? `
+                        <tr>
+                            <td><strong>Rider:</strong></td>
+                            <td style="text-align: right;">${order.delivery_man_name} (${order.delivery_man_phone || 'N/A'})</td>
+                        </tr>
+                        ` : ''}
                     </table>
                     
                     <div class="receipt-divider"></div>
@@ -1024,7 +1044,7 @@
                         </tr>
                         <tr class="total-row">
                             <td>TOTAL:</td>
-                            <td style="text-align: right;">Tk. ${parseFloat(order.total_price).toFixed(0)}</td>
+                            <td style="text-align: right;">Tk. ${total.toFixed(0)}</td>
                         </tr>
                     </table>
                     

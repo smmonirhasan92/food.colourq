@@ -1428,31 +1428,38 @@ input[type="checkbox"]:checked + .form-checkbox::after {
 
 @media print {
     /* Hide everything on the page except the receipt container */
-    body * {
-        visibility: hidden;
+    body > *:not(#thermal-receipt) {
+        display: none !important;
     }
-    #thermal-receipt, #thermal-receipt * {
-        visibility: visible;
-    }
+    
     #thermal-receipt {
         display: block !important;
-        position: absolute;
-        left: 0;
-        top: 0;
         width: 80mm; /* Standard 80mm roll width */
         max-width: 100%;
-        margin: 0;
-        padding: 4mm 2mm;
+        margin: 0 auto;
+        padding: 4mm 3mm;
         box-sizing: border-box;
         background: #ffffff;
         color: #000000;
         font-family: 'Courier New', Courier, monospace;
-        font-size: 10pt;
-        line-height: 1.3;
+        font-size: 9pt;
+        line-height: 1.25;
     }
-    /* Set page margins to zero for receipt rolls */
+    
+    #thermal-receipt table {
+        display: table !important;
+        width: 100% !important;
+    }
+    #thermal-receipt tr {
+        display: table-row !important;
+    }
+    #thermal-receipt td, #thermal-receipt th {
+        display: table-cell !important;
+    }
+    
+    /* Force page dimensions for 80mm receipt printers */
     @page {
-        size: auto;
+        size: 80mm auto;
         margin: 0mm;
     }
 }
