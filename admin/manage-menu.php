@@ -281,9 +281,14 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                             <p class="menu-card-desc" style="font-size: 0.8rem; color: var(--text-muted);">${item.description}</p>
                             <div class="menu-card-footer" style="padding-top: 0.75rem; border-top: 1px solid var(--border-color);">
                                 <span class="menu-card-price" style="font-size: 1.15rem; color: var(--primary);">Tk. ${item.price.toFixed(0)}</span>
-                                <button class="btn btn-glass btn-sm" onclick="toggleAvailability(${item.id}, ${item.is_available})" id="btn-avail-${item.id}">
-                                    <i class="fa-solid ${buttonIcon}"></i> ${buttonText}
-                                </button>
+                                <div style="display: flex; gap: 0.35rem;">
+                                    <button class="btn btn-glass btn-sm" onclick="openEditDishModal(${item.id})" style="padding: 0.4rem 0.6rem; border-color: rgba(59, 130, 246, 0.3); color: #3b82f6; width: auto;" title="Edit dish details">
+                                        <i class="fa-solid fa-pen-to-square"></i> Edit
+                                    </button>
+                                    <button class="btn btn-glass btn-sm" onclick="toggleAvailability(${item.id}, ${item.is_available})" id="btn-avail-${item.id}" style="padding: 0.4rem 0.6rem; width: auto;" title="${buttonText} dish">
+                                        <i class="fa-solid ${buttonIcon}"></i> ${buttonText}
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -588,6 +593,138 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
             }
         }
 
+        function openEditDishModal(id) {
+            const item = activeItems.find(item => item.id === id);
+            if (!item) return;
+
+            document.getElementById('edit-dish-id').value = item.id;
+            document.getElementById('edit-dish-name').value = item.name;
+            document.getElementById('edit-dish-price').value = item.price;
+            document.getElementById('edit-dish-cost').value = item.cost_price;
+            
+            // Populate category select list
+            const catSelect = document.getElementById('edit-dish-category');
+            if (catSelect) {
+                catSelect.innerHTML = categoriesCache.map(cat => `
+                    <option value="${cat.slug}" ${cat.slug === item.category ? 'selected' : ''}>${cat.name}</option>
+                `).join('');
+            }
+            
+            document.getElementById('edit-dish-img').value = item.image_url.startsWith('../images/') ? '' : item.image_url;
+            document.getElementById('edit-dish-desc').value = item.description;
+
+            // Reset image file input and preview
+            document.getElementById('edit-dish-file').value = '';
+            const previewContainer = document.getElementById('edit-image-preview-container');
+            const previewImg = document.getElementById('edit-image-preview');
+            const statusText = document.getElementById('edit-upload-status');
+            const uploadLabel = document.getElementById('edit-upload-label');
+            
+            if (previewContainer && previewImg && statusText && uploadLabel) {
+                if (item.image_url.startsWith('../images/')) {
+                    previewImg.src = item.image_url;
+                    previewContainer.style.display = 'block';
+                    statusText.textContent = item.image_url.split('/').pop();
+                    uploadLabel.style.borderColor = 'var(--success)';
+                } else {
+                    previewContainer.style.display = 'none';
+                    statusText.textContent = 'Choose Image File';
+                    uploadLabel.style.borderColor = '';
+                }
+            }
+
+            const modal = document.getElementById('edit-dish-modal');
+            if (modal) modal.classList.add('active');
+        }
+
+        function closeEditDishModal() {
+            const modal = document.getElementById('edit-dish-modal');
+            if (modal) modal.classList.remove('active');
+        }
+
+        function previewEditLocalImage(e) {
+            const file = e.target.files[0];
+            const previewContainer = document.getElementById('edit-image-preview-container');
+            const previewImg = document.getElementById('edit-image-preview');
+            const statusText = document.getElementById('edit-upload-status');
+            const uploadLabel = document.getElementById('edit-upload-label');
+
+            if (file && previewContainer && previewImg && statusText && uploadLabel) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    previewImg.src = event.target.result;
+                    previewContainer.style.display = 'block';
+                    statusText.textContent = file.name;
+                    statusText.style.maxWidth = '120px';
+                    statusText.style.overflow = 'hidden';
+                    statusText.style.textOverflow = 'ellipsis';
+                    statusText.style.whiteSpace = 'nowrap';
+                    uploadLabel.style.borderColor = 'var(--success)';
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        async function handleEditDishSubmit(e) {
+            e.preventDefault();
+
+            const id = document.getElementById('edit-dish-id').value;
+            const name = document.getElementById('edit-dish-name').value;
+            const price = parseFloat(document.getElementById('edit-dish-price').value);
+            const cost_price = parseFloat(document.getElementById('edit-dish-cost').value);
+            const category = document.getElementById('edit-dish-category').value;
+            const imgUrl = document.getElementById('edit-dish-img').value;
+            const desc = document.getElementById('edit-dish-desc').value;
+            const fileInput = document.getElementById('edit-dish-file');
+
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Saving...`;
+            }
+
+            try {
+                const formData = new FormData();
+                formData.append('id', id);
+                formData.append('name', name);
+                formData.append('price', price);
+                formData.append('cost_price', cost_price);
+                formData.append('category', category);
+                formData.append('description', desc);
+                formData.append('image_url', imgUrl);
+                
+                if (fileInput && fileInput.files[0]) {
+                    formData.append('dish_image', fileInput.files[0]);
+                }
+
+                const response = await fetch('../api/update-menu-item.php', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    if (window.NotificationSystem) {
+                        window.NotificationSystem.toast('success', 'Recipe Updated', `Successfully updated '${name}' in catalog.`);
+                    }
+                    closeEditDishModal();
+                    fetchMenuItems();
+                } else {
+                    throw new Error(result.message || 'Failed to update');
+                }
+            } catch (error) {
+                console.error(error);
+                if (window.NotificationSystem) {
+                    window.NotificationSystem.toast('error', 'Update Failed', error.message || 'Error occurred while saving updates.');
+                }
+            } finally {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = 'Save Updates';
+                }
+            }
+        }
+
         window.addEventListener('load', async () => {
             await fetchCategories();
             await fetchMenuItems();
@@ -618,6 +755,76 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                     <!-- Dynamically populated -->
                 </ul>
             </div>
+        </div>
+    </div>
+
+    <!-- Edit Dish Modal -->
+    <div id="edit-dish-modal" class="modal-overlay" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 1000; align-items: center; justify-content: center;">
+        <div class="glass-panel" style="width: 100%; max-width: 550px; padding: 2rem; background-color: var(--bg-dark-surface); border: 1px solid var(--border-color); position: relative; animation: modalFadeIn 0.3s ease;">
+            <button type="button" onclick="closeEditDishModal()" style="position: absolute; top: 1.25rem; right: 1.25rem; background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.2rem;">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <h3 style="font-family: var(--font-heading); font-size: 1.25rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; color: var(--text-primary); display: flex; align-items: center; gap: 0.5rem;">
+                <i class="fa-solid fa-pen-to-square" style="color: var(--primary);"></i> Edit Gourmet Dish
+            </h3>
+            
+            <form id="edit-dish-form" onsubmit="handleEditDishSubmit(event)">
+                <input type="hidden" id="edit-dish-id">
+                
+                <div class="form-group">
+                    <label class="form-label" for="edit-dish-name">Dish Name</label>
+                    <input class="form-input" type="text" id="edit-dish-name" required placeholder="e.g. Herb Crusted Ribeye" style="background-color: rgba(15, 23, 42, 0.5); border: 1px solid rgba(255, 255, 255, 0.08); color: white;">
+                </div>
+
+                <div class="grid grid-cols-3" style="grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label class="form-label" for="edit-dish-price">Price (Tk.)</label>
+                        <input class="form-input" type="number" id="edit-dish-price" step="1" required placeholder="e.g. 450" style="background-color: rgba(15, 23, 42, 0.5); border: 1px solid rgba(255, 255, 255, 0.08); color: white;">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="edit-dish-cost">Cost (Tk.)</label>
+                        <input class="form-input" type="number" id="edit-dish-cost" step="1" required placeholder="e.g. 200" style="background-color: rgba(15, 23, 42, 0.5); border: 1px solid rgba(255, 255, 255, 0.08); color: white;">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="edit-dish-category">Category</label>
+                        <select class="form-input form-select" id="edit-dish-category" style="background-color: rgb(15, 23, 42); border: 1px solid rgba(255, 255, 255, 0.08); color: white;">
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="edit-dish-img">Image URL (CDN / Web)</label>
+                    <input class="form-input" type="url" id="edit-dish-img" placeholder="https://images.unsplash.com/..." style="background-color: rgba(15, 23, 42, 0.5); border: 1px solid rgba(255, 255, 255, 0.08); color: white;">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                        <span>Or Upload Local Image</span>
+                        <span style="font-size: 0.75rem; color: var(--primary); font-weight: 600;">RECOMMENDED</span>
+                    </label>
+                    <div style="display: flex; gap: 1rem; align-items: center;">
+                        <label class="btn btn-glass btn-sm" style="flex: 1; border: 1.5px dashed var(--border-color); cursor: pointer; padding: 0.9rem; text-align: center; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; gap: 0.5rem; transition: var(--transition-fast);" id="edit-upload-label">
+                            <i class="fa-solid fa-cloud-arrow-up" style="color: var(--primary); font-size: 1.1rem;"></i>
+                            <span id="edit-upload-status" style="font-weight: 500;">Choose Image File</span>
+                            <input type="file" id="edit-dish-file" accept="image/*" style="display: none;" onchange="previewEditLocalImage(event)">
+                        </label>
+                        <div id="edit-image-preview-container" style="display: none; width: 48px; height: 48px; border-radius: var(--radius-sm); overflow: hidden; border: 1px solid var(--border-color); box-shadow: var(--shadow-sm);">
+                            <img id="edit-image-preview" src="" alt="Preview" style="width: 100%; height: 100%; object-fit: cover;">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="edit-dish-desc">Recipe Description</label>
+                    <textarea class="form-input" id="edit-dish-desc" rows="3" required placeholder="Aromatic details of raw ingredients, sauces, preparation style..." style="resize: none; background-color: rgba(15, 23, 42, 0.5); border: 1px solid rgba(255, 255, 255, 0.08); color: white;"></textarea>
+                </div>
+
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                    <button type="button" class="btn btn-glass" onclick="closeEditDishModal()" style="flex: 1;">Cancel</button>
+                    <button type="submit" class="btn btn-primary" style="flex: 2;">Save Updates</button>
+                </div>
+            </form>
         </div>
     </div>
 
