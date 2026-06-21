@@ -21,7 +21,13 @@ function logMessage($msg) {
 $headers = getallheaders();
 $signature = isset($headers['X-Hub-Signature-256']) ? $headers['X-Hub-Signature-256'] : '';
 
-if (!empty(WEBHOOK_SECRET) && !empty($signature)) {
+if (!empty(WEBHOOK_SECRET)) {
+    if (empty($signature)) {
+        logMessage("ERROR: Missing X-Hub-Signature-256 header.");
+        header('HTTP/1.1 401 Unauthorized');
+        echo "Missing Signature Header";
+        exit;
+    }
     $payload = file_get_contents('php://input');
     $expectedSignature = 'sha256=' . hash_hmac('sha256', $payload, WEBHOOK_SECRET);
     

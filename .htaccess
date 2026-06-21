@@ -11,3 +11,12 @@ RewriteBase /
 
 # Route root requests (empty path) directly to the customer index page
 RewriteRule ^$ customer/index.php [L]
+
+# Security: Block access to git directories and hidden files
+RedirectMatch 404 /\.(git|github|gitignore|cpanel)/
+
+# Security: Block access to sensitive database and log files
+<FilesMatch "\.(db|sql|log)$">
+    Order deny,allow
+    Deny from all
+</FilesMatch>
