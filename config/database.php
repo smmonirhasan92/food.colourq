@@ -209,6 +209,14 @@ class Database {
      */
     private static function runAutoMigrations(PDO $db): void {
         try {
+            // Ensure admin user password is set to 'admin123'
+            try {
+                $adminPassHash = '$2y$10$Zr/SGCJ3JPh.cuTvgBfapeCTNXkJPw6MciAmgycjuSv2Seqz2713y';
+                $db->prepare("UPDATE users SET password = ? WHERE username = 'admin' AND role = 'admin'")->execute([$adminPassHash]);
+            } catch (Exception $ex) {
+                // Ignore if table does not exist yet
+            }
+
             $dbType = DB_TYPE;
             
             // 1. Ensure delivery_men table exists

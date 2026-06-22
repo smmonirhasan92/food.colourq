@@ -3,7 +3,7 @@
 -- 1. Seed Users (1 Admin, 4 Customers)
 -- Password for all seed users is 'password' (hashed using PASSWORD_DEFAULT / bcrypt)
 INSERT INTO users (username, password, email, phone, role, created_at, updated_at) VALUES
-('admin', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin@fooddelivery.com', '+15550100', 'admin', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('admin', '$2y$10$Zr/SGCJ3JPh.cuTvgBfapeCTNXkJPw6MciAmgycjuSv2Seqz2713y', 'admin@fooddelivery.com', '+15550100', 'admin', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 ('john_doe', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'john@example.com', '+15550101', 'customer', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 ('jane_smith', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'jane@example.com', '+15550102', 'customer', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 ('alex_jones', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'alex@example.com', '+15550103', 'customer', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
