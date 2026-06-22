@@ -736,18 +736,25 @@
         // Listen for cart updates to update modal contents dynamically
         document.addEventListener('cart:updated', renderModalCheckoutSummary);
 
-        // Toggle card details display based on payment method selection
+        // Toggle payment details display based on payment method selection
         document.addEventListener('DOMContentLoaded', () => {
             const paymentSelect = document.getElementById('modal-payment-method');
             const cardSection = document.getElementById('modal-card-details-section');
-            if (paymentSelect && cardSection) {
-                paymentSelect.addEventListener('change', (e) => {
-                    if (e.target.value === 'card') {
-                        cardSection.style.display = 'block';
-                    } else {
-                        cardSection.style.display = 'none';
+            const mfsSection = document.getElementById('modal-mfs-details-section');
+            
+            if (paymentSelect) {
+                const handlePaymentChange = () => {
+                    const method = paymentSelect.value;
+                    if (cardSection) {
+                        cardSection.style.display = (method === 'card') ? 'block' : 'none';
                     }
-                });
+                    if (mfsSection) {
+                        mfsSection.style.display = (['bkash', 'nagad', 'rocket'].includes(method)) ? 'block' : 'none';
+                    }
+                };
+                paymentSelect.addEventListener('change', handlePaymentChange);
+                // Run on initial load
+                handlePaymentChange();
             }
         });
     </script>
@@ -809,8 +816,11 @@
                 <div class="form-group" style="margin-bottom: 1rem;">
                     <label class="form-label">Payment Method</label>
                     <select class="form-input form-select" name="payment_method" id="modal-payment-method" style="padding: 0.75rem 1rem; background-color: #ffffff;">
-                        <option value="card">Credit / Debit Card</option>
                         <option value="cod" selected>Cash on Delivery (COD)</option>
+                        <option value="bkash">bKash (MFS)</option>
+                        <option value="nagad">Nagad (MFS)</option>
+                        <option value="rocket">Rocket (MFS)</option>
+                        <option value="card">Credit / Debit Card</option>
                         <option value="crypto">Cryptocurrency Gateway</option>
                     </select>
                 </div>
@@ -829,6 +839,22 @@
                         <div class="form-group" style="margin-bottom: 0;">
                             <label class="form-label" for="card-cvc">CVC Code</label>
                             <input class="form-input" type="password" id="card-cvc" placeholder="***" maxlength="4" style="padding: 0.75rem 1rem;">
+                        </div>
+                    </div>
+                </div>
+
+                <div id="modal-mfs-details-section" style="display: none; background: rgba(234, 103, 33, 0.04); border: 1px dashed rgba(234, 103, 33, 0.3); padding: 1.25rem; border-radius: var(--radius-md); margin-bottom: 1.5rem;">
+                    <div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 1rem; line-height: 1.5;">
+                        Please send the total bill amount to our Merchant Wallet: <strong style="color: var(--primary);">01712345678</strong> (Choose Payment/Send Money). Once completed, enter the verification details below:
+                    </div>
+                    <div class="grid grid-cols-2" style="gap: 1rem;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label" for="mfs-sender" style="font-size: 0.75rem;">Sender Mobile No.</label>
+                            <input class="form-input" type="text" id="mfs-sender" name="mfs_sender_number" placeholder="e.g. 01712345678" style="padding: 0.75rem 1rem;">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label" for="mfs-txnid" style="font-size: 0.75rem;">Transaction ID (TxnID)</label>
+                            <input class="form-input" type="text" id="mfs-txnid" name="mfs_transaction_id" placeholder="e.g. 8NX7A8D9" style="padding: 0.75rem 1rem;">
                         </div>
                     </div>
                 </div>

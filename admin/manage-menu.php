@@ -42,6 +42,9 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                 <a href="dashboard.php" class="sidebar-link">
                     <i class="fa-solid fa-chart-pie"></i> Dashboard Stats
                 </a>
+                <a href="pos.php" class="sidebar-link">
+                    <i class="fa-solid fa-cash-register"></i> POS Counter
+                </a>
                 <a href="manage-orders.php" class="sidebar-link">
                     <i class="fa-solid fa-receipt"></i> Live Orders
                 </a>
@@ -281,12 +284,15 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                             <p class="menu-card-desc" style="font-size: 0.8rem; color: var(--text-muted);">${item.description}</p>
                             <div class="menu-card-footer" style="padding-top: 0.75rem; border-top: 1px solid var(--border-color);">
                                 <span class="menu-card-price" style="font-size: 1.15rem; color: var(--primary);">Tk. ${item.price.toFixed(0)}</span>
-                                <div style="display: flex; gap: 0.35rem;">
+                                <div style="display: flex; gap: 0.35rem; flex-wrap: wrap;">
                                     <button class="btn btn-glass btn-sm" onclick="openEditDishModal(${item.id})" style="padding: 0.4rem 0.6rem; border-color: rgba(59, 130, 246, 0.3); color: #3b82f6; width: auto;" title="Edit dish details">
                                         <i class="fa-solid fa-pen-to-square"></i> Edit
                                     </button>
                                     <button class="btn btn-glass btn-sm" onclick="toggleAvailability(${item.id}, ${item.is_available})" id="btn-avail-${item.id}" style="padding: 0.4rem 0.6rem; width: auto;" title="${buttonText} dish">
                                         <i class="fa-solid ${buttonIcon}"></i> ${buttonText}
+                                    </button>
+                                    <button class="btn btn-glass btn-sm" onclick="deleteMenuItem(${item.id}, '${item.name.replace(/'/g, "\\'")}')" style="padding: 0.4rem 0.6rem; border-color: rgba(239, 68, 68, 0.3); color: #ef4444; width: auto;" title="Delete dish">
+                                        <i class="fa-solid fa-trash-can"></i> Delete
                                     </button>
                                 </div>
                             </div>
@@ -467,6 +473,39 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                     if (window.NotificationSystem) {
                         window.NotificationSystem.toast('success', 'Recipe Active (Simulated)', 'Dish published with active visibility.');
                     }
+                }
+            }
+        }
+
+        async function deleteMenuItem(itemId, itemName) {
+            if (!confirm(`Are you sure you want to permanently delete '${itemName}' from active listings?`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch('../api/delete-menu-item.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        id: itemId
+                    })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    if (window.NotificationSystem) {
+                        window.NotificationSystem.toast('success', 'Recipe Deleted', `Successfully deleted '${itemName}' from menu.`);
+                    }
+                    fetchMenuItems();
+                } else {
+                    throw new Error(result.message || 'Delete failed');
+                }
+            } catch (error) {
+                console.error('[CatalogDesk] Delete request failed:', error);
+                if (window.NotificationSystem) {
+                    window.NotificationSystem.toast('error', 'Delete Failed', error.message || 'Error occurred while deleting item.');
                 }
             }
         }

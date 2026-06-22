@@ -18,10 +18,10 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 try {
     $db = Database::getConnection();
     
-    // Fetch active items sorted by category and name
+    // Fetch active non-deleted items sorted by category and name
     $query = "SELECT id, name, description, price, category, image_url 
               FROM menu_items 
-              WHERE is_available = 1 
+              WHERE is_available = 1 AND is_deleted = 0
               ORDER BY category ASC, name ASC";
     
     $stmt = $db->query($query);

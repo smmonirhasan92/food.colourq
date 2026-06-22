@@ -33,6 +33,10 @@ $phone = isset($input['phone']) ? $input['phone'] : (isset($input['customer_phon
 $deliveryAddress = isset($input['delivery_address']) ? $input['delivery_address'] : null;
 $items = isset($input['items']) ? $input['items'] : (isset($input['cart']) ? $input['cart'] : null);
 
+$paymentMethod = isset($input['payment_method']) ? $input['payment_method'] : 'cod';
+$mfsSenderNumber = isset($input['mfs_sender_number']) ? $input['mfs_sender_number'] : null;
+$mfsTransactionId = isset($input['mfs_transaction_id']) ? $input['mfs_transaction_id'] : null;
+
 // Validate required fields manually using mapped variables
 if (empty($username) || empty($email) || empty($phone) || empty($deliveryAddress) || empty($items)) {
     sendJsonResponse(false, "Missing required fields. Please ensure username/customer_name, email/customer_email, phone/customer_phone, delivery_address, and items/cart are provided.", null, 400);
@@ -156,10 +160,10 @@ try {
     
     // 1. Insert into orders table
     $insertOrder = $db->prepare("
-        INSERT INTO orders (user_id, order_number, total_price, status, delivery_address, phone, is_notified) 
-        VALUES (?, ?, ?, 'pending', ?, ?, 0)
+        INSERT INTO orders (user_id, order_number, total_price, status, delivery_address, phone, is_notified, order_type, payment_method, mfs_sender_number, mfs_transaction_id) 
+        VALUES (?, ?, ?, 'pending', ?, ?, 0, 'online', ?, ?, ?)
     ");
-    $insertOrder->execute([$userId, $orderNumber, $totalPrice, $deliveryAddress, $phone]);
+    $insertOrder->execute([$userId, $orderNumber, $totalPrice, $deliveryAddress, $phone, $paymentMethod, $mfsSenderNumber, $mfsTransactionId]);
     $orderId = (int)$db->lastInsertId();
     
     // 2. Insert into order_items table
@@ -177,7 +181,7 @@ try {
     $adminRow = $adminStmt->fetch();
     $adminId = $adminRow ? (int)$adminRow['id'] : 1; // Fallback to 1
     
-    $notificationMsg = "New order {$orderNumber} placed by {$username}. Total: $" . number_format($totalPrice, 2);
+    $notificationMsg = "New order {$orderNumber} placed by {$username}. Total: Tk. " . number_format($totalPrice, 0) . " (" . strtoupper($paymentMethod) . ")";
     $insertNotification = $db->prepare("
         INSERT INTO notifications_log (user_id, order_id, message, is_read) 
         VALUES (?, ?, ?, 0)

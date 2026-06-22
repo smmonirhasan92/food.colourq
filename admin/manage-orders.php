@@ -42,6 +42,9 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                 <a href="dashboard.php" class="sidebar-link">
                     <i class="fa-solid fa-chart-pie"></i> Dashboard Stats
                 </a>
+                <a href="pos.php" class="sidebar-link">
+                    <i class="fa-solid fa-cash-register"></i> POS Counter
+                </a>
                 <a href="manage-orders.php" class="sidebar-link active">
                     <i class="fa-solid fa-receipt"></i> Live Orders
                 </a>
@@ -533,17 +536,50 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                 const customerName = (order.customer && order.customer.username) ? order.customer.username : (order.username || order.customer_name || 'Client');
                 const customerEmail = (order.customer && order.customer.email) ? order.customer.email : (order.email || order.customer_email || '');
 
+                let paymentDetailsHtml = '';
+                if (order.payment_method && order.payment_method !== 'cod') {
+                    const methodUpper = order.payment_method.toUpperCase();
+                    const senderNum = order.mfs_sender_number || '';
+                    const txnId = order.mfs_transaction_id || '';
+                    paymentDetailsHtml = `
+                        <div style="margin-top: 0.35rem; font-size: 0.75rem; padding: 0.25rem 0.5rem; background: rgba(234, 103, 33, 0.08); border-radius: var(--radius-sm); border: 1px solid rgba(234, 103, 33, 0.2); width: fit-content; display: inline-flex; flex-direction: column; gap: 0.15rem;">
+                            <span style="color: var(--primary); font-weight: 600;">${methodUpper} Payment</span>
+                            ${senderNum ? `<span style="color: var(--text-primary);">Sender: ${senderNum}</span>` : ''}
+                            ${txnId ? `<span style="color: var(--text-primary);">TxnID: ${txnId}</span>` : ''}
+                        </div>
+                    `;
+                } else if (order.payment_method === 'cod') {
+                    paymentDetailsHtml = `
+                        <div style="margin-top: 0.35rem; font-size: 0.75rem; color: var(--text-muted);">
+                            <i class="fa-solid fa-hand-holding-dollar"></i> Cash on Delivery
+                        </div>
+                    `;
+                }
+
+                let discountHtml = '';
+                if (parseFloat(order.discount_amount) > 0) {
+                    discountHtml = `
+                        <div style="font-size: 0.75rem; color: #ef4444; font-weight: 500; margin-top: 0.15rem;">
+                            Discount: -Tk. ${parseFloat(order.discount_amount).toFixed(0)} (${parseFloat(order.discount_percent).toFixed(0)}%)
+                        </div>
+                    `;
+                }
+
                 return `
                     <tr id="order-row-${numericId}">
                         <td data-label="Order ID" style="font-weight: 700; color: var(--primary);">${order.order_number}</td>
                         <td data-label="Customer Name">
                             <div style="font-weight: 600; color: var(--text-primary);">${customerName}</div>
                             <div style="font-size: 0.75rem; color: var(--text-muted);">${customerEmail}</div>
+                            ${paymentDetailsHtml}
                         </td>
                         <td data-label="Order Items">
                             ${itemsHtml}
                         </td>
-                        <td data-label="Price" style="font-weight: 700; color: var(--text-primary);">Tk. ${parseFloat(order.total_price).toFixed(0)}</td>
+                        <td data-label="Price" style="font-weight: 700; color: var(--text-primary);">
+                            Tk. ${parseFloat(order.total_price).toFixed(0)}
+                            ${discountHtml}
+                        </td>
                         <td data-label="Received Time" style="color: var(--text-muted);">${receivedTime}</td>
                         <td data-label="Tracking Status">
                             <span class="${getStatusColorClass(order.status)}" id="badge-${numericId}">${order.status.charAt(0).toUpperCase() + order.status.slice(1)}</span>

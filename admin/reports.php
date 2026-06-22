@@ -51,15 +51,53 @@ try {
     $summaryQuery = "
         SELECT 
             COALESCE(SUM(oi.quantity * oi.price), 0) as gross_sales,
-            COALESCE(SUM(oi.quantity * m.cost_price), 0) as total_cost,
-            COALESCE(SUM(oi.quantity * (oi.price - m.cost_price)), 0) as gross_profit
+            COALESCE(SUM(oi.quantity * m.cost_price), 0) as total_cost
         FROM order_items oi
         JOIN menu_items m ON oi.menu_item_id = m.id
         JOIN orders o ON oi.order_id = o.id
         WHERE o.status = 'delivered' $dateCondition
     ";
     
-    $summary = $db->query($summaryQuery)->fetch();
+    $summaryData = $db->query($summaryQuery)->fetch();
+    $grossSales = (float)$summaryData['gross_sales'];
+    $totalCost = (float)$summaryData['total_cost'];
+
+    // Fetch order types and discounts breakdown
+    $typeBreakdownQuery = "
+        SELECT 
+            SUM(CASE WHEN o.order_type = 'pos' THEN 1 ELSE 0 END) as pos_orders,
+            SUM(CASE WHEN o.order_type = 'online' OR o.order_type IS NULL OR o.order_type = '' THEN 1 ELSE 0 END) as online_orders,
+            SUM(CASE WHEN o.order_type = 'pos' THEN o.total_price ELSE 0 END) as pos_sales,
+            SUM(CASE WHEN o.order_type = 'online' OR o.order_type IS NULL OR o.order_type = '' THEN o.total_price ELSE 0 END) as online_sales,
+            COALESCE(SUM(o.discount_amount), 0) as total_discounts
+        FROM orders o
+        WHERE o.status = 'delivered' $dateCondition
+    ";
+    $typeBreakdown = $db->query($typeBreakdownQuery)->fetch();
+    $posOrdersCount = (int)($typeBreakdown['pos_orders'] ?? 0);
+    $onlineOrdersCount = (int)($typeBreakdown['online_orders'] ?? 0);
+    $posSalesVal = (float)($typeBreakdown['pos_sales'] ?? 0);
+    $onlineSalesVal = (float)($typeBreakdown['online_sales'] ?? 0);
+    $totalDiscountsVal = (float)($typeBreakdown['total_discounts'] ?? 0);
+
+    $actualSalesCollectedVal = $grossSales - $totalDiscountsVal;
+    $grossProfit = $actualSalesCollectedVal - $totalCost;
+
+    // Fetch payment methods breakdown (bKash, Nagad, Rocket, Cash/COD)
+    $paymentBreakdownQuery = "
+        SELECT 
+            SUM(CASE WHEN o.payment_method = 'bkash' THEN o.total_price ELSE 0 END) as bkash_sales,
+            SUM(CASE WHEN o.payment_method = 'nagad' THEN o.total_price ELSE 0 END) as nagad_sales,
+            SUM(CASE WHEN o.payment_method = 'rocket' THEN o.total_price ELSE 0 END) as rocket_sales,
+            SUM(CASE WHEN o.payment_method = 'cod' OR o.payment_method IS NULL OR o.payment_method = '' THEN o.total_price ELSE 0 END) as cod_sales
+        FROM orders o
+        WHERE o.status = 'delivered' $dateCondition
+    ";
+    $paymentBreakdown = $db->query($paymentBreakdownQuery)->fetch();
+    $bkashSalesVal = (float)($paymentBreakdown['bkash_sales'] ?? 0);
+    $nagadSalesVal = (float)($paymentBreakdown['nagad_sales'] ?? 0);
+    $rocketSalesVal = (float)($paymentBreakdown['rocket_sales'] ?? 0);
+    $codSalesVal = (float)($paymentBreakdown['cod_sales'] ?? 0);
 
     // 3. Fetch completed delivery details to subtract delivery costs (Tk. 60 per order)
     $deliveryCostQuery = "
@@ -71,7 +109,7 @@ try {
     $completedDeliveriesCount = (int)$deliveries['completed_deliveries'];
     $totalDeliveryPayout = $completedDeliveriesCount * 60; // Tk. 60 per delivery
 
-    $netProfit = (float)$summary['gross_profit'] - $totalDeliveryPayout;
+    $netProfit = $grossProfit - $totalDeliveryPayout;
 
     // 4. Fetch product performance list
     $productPerformanceQuery = "
@@ -110,7 +148,19 @@ try {
 
 } catch (Exception $e) {
     logCustomError("reports.php error: " . $e->getMessage());
-    $summary = ['gross_sales' => 0, 'total_cost' => 0, 'gross_profit' => 0];
+    $grossSales = 0;
+    $totalCost = 0;
+    $grossProfit = 0;
+    $posOrdersCount = 0;
+    $onlineOrdersCount = 0;
+    $posSalesVal = 0;
+    $onlineSalesVal = 0;
+    $totalDiscountsVal = 0;
+    $actualSalesCollectedVal = 0;
+    $bkashSalesVal = 0;
+    $nagadSalesVal = 0;
+    $rocketSalesVal = 0;
+    $codSalesVal = 0;
     $completedDeliveriesCount = 0;
     $totalDeliveryPayout = 0;
     $netProfit = 0;
@@ -154,6 +204,9 @@ try {
             <nav class="sidebar-menu">
                 <a href="dashboard.php" class="sidebar-link">
                     <i class="fa-solid fa-chart-pie"></i> Dashboard Stats
+                </a>
+                <a href="pos.php" class="sidebar-link">
+                    <i class="fa-solid fa-cash-register"></i> POS Counter
                 </a>
                 <a href="manage-orders.php" class="sidebar-link">
                     <i class="fa-solid fa-receipt"></i> Live Orders
@@ -218,7 +271,7 @@ try {
                     </div>
                     <div>
                         <span style="color: var(--text-muted); font-size: 0.85rem; font-weight: 500;">Gross Sales</span>
-                        <h2 style="font-size: 1.6rem; margin-top: 0.15rem; color: var(--text-primary);">Tk. <?php echo number_format($summary['gross_sales'], 0); ?></h2>
+                        <h2 style="font-size: 1.6rem; margin-top: 0.15rem; color: var(--text-primary);">Tk. <?php echo number_format($grossSales, 0); ?></h2>
                     </div>
                 </div>
 
@@ -229,7 +282,7 @@ try {
                     </div>
                     <div>
                         <span style="color: var(--text-muted); font-size: 0.85rem; font-weight: 500;">Product Cost</span>
-                        <h2 style="font-size: 1.6rem; margin-top: 0.15rem; color: var(--text-primary);">Tk. <?php echo number_format($summary['total_cost'], 0); ?></h2>
+                        <h2 style="font-size: 1.6rem; margin-top: 0.15rem; color: var(--text-primary);">Tk. <?php echo number_format($totalCost, 0); ?></h2>
                     </div>
                 </div>
 
@@ -240,7 +293,7 @@ try {
                     </div>
                     <div>
                         <span style="color: var(--text-muted); font-size: 0.85rem; font-weight: 500;">Gross Profit</span>
-                        <h2 style="font-size: 1.6rem; margin-top: 0.15rem; color: var(--success);">Tk. <?php echo number_format($summary['gross_profit'], 0); ?></h2>
+                        <h2 style="font-size: 1.6rem; margin-top: 0.15rem; color: var(--success);">Tk. <?php echo number_format($grossProfit, 0); ?></h2>
                     </div>
                 </div>
 
@@ -252,6 +305,55 @@ try {
                     <div>
                         <span style="color: var(--text-muted); font-size: 0.85rem; font-weight: 500;">Net Profit (Riders Paid)</span>
                         <h2 style="font-size: 1.6rem; margin-top: 0.15rem; color: <?php echo $netProfit >= 0 ? '#10b981' : '#ef4444'; ?>;">Tk. <?php echo number_format($netProfit, 0); ?></h2>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Sales Channel & Payment Method Breakdowns -->
+            <section class="grid grid-cols-2" style="margin-bottom: 2.5rem; gap: 2rem; display: grid; grid-template-columns: 1fr 1fr;">
+                <!-- Channel & Discount Breakdown -->
+                <div class="glass-panel" style="padding: 2rem; background-color: var(--bg-dark-surface); border: 1px solid var(--border-color);">
+                    <h3 style="font-family: var(--font-heading); font-size: 1.15rem; margin-bottom: 1.25rem; color: var(--text-primary); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fa-solid fa-store" style="color: var(--primary);"></i> Sales Channels & Discounts
+                    </h3>
+                    <div style="display: flex; flex-direction: column; gap: 1rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="color: var(--text-muted); font-size: 0.9rem;">POS Counter Orders</span>
+                            <span style="font-weight: 600; color: var(--text-primary);"><?php echo $posOrdersCount; ?> orders (Tk. <?php echo number_format($posSalesVal, 0); ?>)</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="color: var(--text-muted); font-size: 0.9rem;">Online Storefront Orders</span>
+                            <span style="font-weight: 600; color: var(--text-primary);"><?php echo $onlineOrdersCount; ?> orders (Tk. <?php echo number_format($onlineSalesVal, 0); ?>)</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed var(--border-color); padding-top: 0.75rem;">
+                            <span style="color: var(--text-muted); font-size: 0.9rem;">Total Discounts Allowed</span>
+                            <span style="font-weight: 600; color: #ef4444;">-Tk. <?php echo number_format($totalDiscountsVal, 0); ?></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payment Methods Breakdown -->
+                <div class="glass-panel" style="padding: 2rem; background-color: var(--bg-dark-surface); border: 1px solid var(--border-color);">
+                    <h3 style="font-family: var(--font-heading); font-size: 1.15rem; margin-bottom: 1.25rem; color: var(--text-primary); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fa-solid fa-credit-card" style="color: var(--primary);"></i> Payment Methods
+                    </h3>
+                    <div style="display: flex; flex-direction: column; gap: 0.85rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="color: var(--text-muted); font-size: 0.9rem;">bKash Sales</span>
+                            <span style="font-weight: 600; color: var(--text-primary);">Tk. <?php echo number_format($bkashSalesVal, 0); ?></span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="color: var(--text-muted); font-size: 0.9rem;">Nagad Sales</span>
+                            <span style="font-weight: 600; color: var(--text-primary);">Tk. <?php echo number_format($nagadSalesVal, 0); ?></span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="color: var(--text-muted); font-size: 0.9rem;">Rocket Sales</span>
+                            <span style="font-weight: 600; color: var(--text-primary);">Tk. <?php echo number_format($rocketSalesVal, 0); ?></span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed var(--border-color); padding-top: 0.5rem;">
+                            <span style="color: var(--text-muted); font-size: 0.9rem;">Cash / Cash on Delivery</span>
+                            <span style="font-weight: 600; color: var(--text-primary);">Tk. <?php echo number_format($codSalesVal, 0); ?></span>
+                        </div>
                     </div>
                 </div>
             </section>

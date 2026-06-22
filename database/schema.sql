@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS menu_items (
     category VARCHAR(50) NOT NULL, -- 'appetizer', 'main', 'dessert', 'drink'
     image_url VARCHAR(255),
     is_available TINYINT DEFAULT 1,
+    is_deleted TINYINT DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -55,6 +56,12 @@ CREATE TABLE IF NOT EXISTS orders (
     feedback_rating INTEGER NULL,
     feedback_comment TEXT NULL,
     delivery_man_id INTEGER NULL,
+    order_type VARCHAR(20) DEFAULT 'online', -- 'online' or 'pos'
+    discount_percent DECIMAL(5, 2) DEFAULT 0.00,
+    discount_amount DECIMAL(10, 2) DEFAULT 0.00,
+    mfs_sender_number VARCHAR(20) NULL,
+    mfs_transaction_id VARCHAR(50) NULL,
+    payment_method VARCHAR(30) DEFAULT 'cod',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE

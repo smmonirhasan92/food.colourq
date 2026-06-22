@@ -240,6 +240,29 @@ class Database {
                 if (!in_array('cost_price', $colCheckMenu)) {
                     $db->exec("ALTER TABLE menu_items ADD COLUMN cost_price DECIMAL(10, 2) NOT NULL DEFAULT 0.00");
                 }
+                if (!in_array('is_deleted', $colCheckMenu)) {
+                    $db->exec("ALTER TABLE menu_items ADD COLUMN is_deleted TINYINT DEFAULT 0");
+                }
+
+                // Ensure POS and MFS payment columns exist on orders table in SQLite
+                if (!in_array('order_type', $colCheck)) {
+                    $db->exec("ALTER TABLE orders ADD COLUMN order_type VARCHAR(20) DEFAULT 'online'");
+                }
+                if (!in_array('discount_percent', $colCheck)) {
+                    $db->exec("ALTER TABLE orders ADD COLUMN discount_percent DECIMAL(5, 2) DEFAULT 0.00");
+                }
+                if (!in_array('discount_amount', $colCheck)) {
+                    $db->exec("ALTER TABLE orders ADD COLUMN discount_amount DECIMAL(10, 2) DEFAULT 0.00");
+                }
+                if (!in_array('mfs_sender_number', $colCheck)) {
+                    $db->exec("ALTER TABLE orders ADD COLUMN mfs_sender_number VARCHAR(20) NULL");
+                }
+                if (!in_array('mfs_transaction_id', $colCheck)) {
+                    $db->exec("ALTER TABLE orders ADD COLUMN mfs_transaction_id VARCHAR(50) NULL");
+                }
+                if (!in_array('payment_method', $colCheck)) {
+                    $db->exec("ALTER TABLE orders ADD COLUMN payment_method VARCHAR(30) DEFAULT 'cod'");
+                }
                 
                 // Ensure menu_categories table exists
                 $db->exec("CREATE TABLE IF NOT EXISTS menu_categories (
@@ -285,6 +308,26 @@ class Database {
                 $colExistsMenu = $colsQueryMenu->fetch();
                 if (!$colExistsMenu) {
                     $db->exec("ALTER TABLE menu_items ADD COLUMN cost_price DECIMAL(10, 2) NOT NULL DEFAULT 0.00");
+                }
+                $colsQueryMenuDel = $db->query("SHOW COLUMNS FROM menu_items LIKE 'is_deleted'");
+                if (!$colsQueryMenuDel->fetch()) {
+                    $db->exec("ALTER TABLE menu_items ADD COLUMN is_deleted TINYINT DEFAULT 0");
+                }
+
+                // Ensure POS and MFS payment columns exist on orders table in MySQL
+                $colsQueryPos = $db->query("SHOW COLUMNS FROM orders LIKE 'order_type'");
+                if (!$colsQueryPos->fetch()) {
+                    $db->exec("ALTER TABLE orders ADD COLUMN order_type VARCHAR(20) DEFAULT 'online',
+                               ADD COLUMN discount_percent DECIMAL(5, 2) DEFAULT 0.00,
+                               ADD COLUMN discount_amount DECIMAL(10, 2) DEFAULT 0.00,
+                               ADD COLUMN mfs_sender_number VARCHAR(20) NULL,
+                               ADD COLUMN mfs_transaction_id VARCHAR(50) NULL,
+                               ADD COLUMN payment_method VARCHAR(30) DEFAULT 'cod'");
+                } else {
+                    $colsQueryPay = $db->query("SHOW COLUMNS FROM orders LIKE 'payment_method'");
+                    if (!$colsQueryPay->fetch()) {
+                        $db->exec("ALTER TABLE orders ADD COLUMN payment_method VARCHAR(30) DEFAULT 'cod'");
+                    }
                 }
                 
                 $db->exec("CREATE TABLE IF NOT EXISTS menu_categories (

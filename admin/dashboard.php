@@ -4,6 +4,53 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
     header("Location: login.php");
     exit;
 }
+
+require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../includes/functions.php';
+
+try {
+    $db = Database::getConnection();
+    
+    // Fetch stats
+    $totalOrders = (int)$db->query("SELECT COUNT(*) FROM orders")->fetchColumn();
+    $netSales = (float)$db->query("SELECT SUM(total_price) FROM orders WHERE status = 'delivered'")->fetchColumn();
+    $pendingActions = (int)$db->query("SELECT COUNT(*) FROM orders WHERE status = 'pending'")->fetchColumn();
+    
+    // Average kitchen prep time (mock or average difference between created_at and prepared_at)
+    $avgPrepQuery = DB_TYPE === 'sqlite' 
+        ? "SELECT AVG((strftime('%s', prepared_at) - strftime('%s', created_at)) / 60) FROM orders WHERE prepared_at IS NOT NULL AND status != 'cancelled'"
+        : "SELECT AVG(TIMESTAMPDIFF(MINUTE, created_at, prepared_at)) FROM orders WHERE prepared_at IS NOT NULL AND status != 'cancelled'";
+    $avgPrep = $db->query($avgPrepQuery)->fetchColumn();
+    $avgPrep = $avgPrep ? round($avgPrep) : 15; // default 15
+    
+    // Fetch 7-day sales trend
+    $trendQuery = DB_TYPE === 'sqlite'
+        ? "SELECT strftime('%d-%b', created_at) as label, SUM(total_price) as total FROM orders WHERE status = 'delivered' AND created_at >= date('now', '-7 days') GROUP BY label ORDER BY created_at ASC"
+        : "SELECT DATE_FORMAT(created_at, '%d-%b') as label, SUM(total_price) as total FROM orders WHERE status = 'delivered' AND created_at >= DATE_SUB(CURDATE(), INTERVAL 7 DAY) GROUP BY label ORDER BY created_at ASC";
+    $trendRows = $db->query($trendQuery)->fetchAll();
+    
+    $chartLabels = [];
+    $chartData = [];
+    foreach ($trendRows as $row) {
+        $chartLabels[] = $row['label'];
+        $chartData[] = (float)$row['total'];
+    }
+    
+    // If empty trend, fill with last 3 days mock or empty
+    if (empty($chartLabels)) {
+        $chartLabels = [date('d-M', strtotime('-2 days')), date('d-M', strtotime('-1 days')), date('d-M')];
+        $chartData = [0.0, 0.0, 0.0];
+    }
+    
+} catch (Exception $e) {
+    logCustomError("dashboard.php stats query error: " . $e->getMessage());
+    $totalOrders = 0;
+    $netSales = 0;
+    $pendingActions = 0;
+    $avgPrep = 15;
+    $chartLabels = [date('d-M')];
+    $chartData = [0.0];
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -15,6 +62,7 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
     <link rel="stylesheet" href="../assets/css/responsive.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
 </head>
 <body>
 
@@ -42,6 +90,9 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
             <nav class="sidebar-menu">
                 <a href="dashboard.php" class="sidebar-link active">
                     <i class="fa-solid fa-chart-pie"></i> Dashboard Stats
+                </a>
+                <a href="pos.php" class="sidebar-link">
+                    <i class="fa-solid fa-cash-register"></i> POS Counter
                 </a>
                 <a href="manage-orders.php" class="sidebar-link">
                     <i class="fa-solid fa-receipt"></i> Live Orders
@@ -93,7 +144,7 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                     </div>
                     <div>
                         <span style="color: var(--text-muted); font-size: 0.85rem; font-weight: 500;">Total Orders</span>
-                        <h2 style="font-size: 1.75rem; margin-top: 0.15rem; color: var(--text-primary);" class="stat-dial" data-val="1480">0</h2>
+                        <h2 style="font-size: 1.75rem; margin-top: 0.15rem; color: var(--text-primary);" class="stat-dial" data-val="<?php echo $totalOrders; ?>">0</h2>
                     </div>
                 </div>
 
@@ -104,7 +155,7 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                     </div>
                     <div>
                         <span style="color: var(--text-muted); font-size: 0.85rem; font-weight: 500;">Net Sales</span>
-                        <h2 style="font-size: 1.75rem; margin-top: 0.15rem; color: var(--text-primary);">Tk. <span class="stat-dial" data-val="24950">0</span></h2>
+                        <h2 style="font-size: 1.75rem; margin-top: 0.15rem; color: var(--text-primary);">Tk. <span class="stat-dial" data-val="<?php echo $netSales; ?>">0</span></h2>
                     </div>
                 </div>
 
@@ -115,7 +166,7 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                     </div>
                     <div>
                         <span style="color: var(--text-muted); font-size: 0.85rem; font-weight: 500;">Avg Kitchen Prep</span>
-                        <h2 style="font-size: 1.75rem; margin-top: 0.15rem; color: var(--text-primary);"><span class="stat-dial" data-val="14">0</span> mins</h2>
+                        <h2 style="font-size: 1.75rem; margin-top: 0.15rem; color: var(--text-primary);"><span class="stat-dial" data-val="<?php echo $avgPrep; ?>">0</span> mins</h2>
                     </div>
                 </div>
 
@@ -126,8 +177,18 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                     </div>
                     <div>
                         <span style="color: var(--text-muted); font-size: 0.85rem; font-weight: 500;">Pending Actions</span>
-                        <h2 style="font-size: 1.75rem; margin-top: 0.15rem; color: var(--text-primary);" class="stat-dial" data-val="3">0</h2>
+                        <h2 style="font-size: 1.75rem; margin-top: 0.15rem; color: var(--text-primary);" class="stat-dial" data-val="<?php echo $pendingActions; ?>">0</h2>
                     </div>
+                </div>
+            </section>
+
+            <!-- Sales Analytics Chart -->
+            <section class="glass-panel" style="padding: 2rem; margin-bottom: 2.5rem; background-color: var(--bg-dark-surface); border: 1px solid var(--border-color);">
+                <h3 style="font-family: var(--font-heading); font-size: 1.25rem; margin-bottom: 1.5rem; color: var(--text-primary);">
+                    <i class="fa-solid fa-chart-area" style="color: var(--primary);"></i> Weekly Sales Analytics Trend
+                </h3>
+                <div style="width: 100%; height: 280px; position: relative;">
+                    <canvas id="salesChart" style="width: 100%; height: 100%;"></canvas>
                 </div>
             </section>
 
@@ -371,6 +432,46 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
             // Poll for order alerts every 15 seconds
             checkIncomingOrdersStream();
             setInterval(checkIncomingOrdersStream, 15000);
+
+            // Render Chart.js Weekly Sales Analytics Trend
+            const ctx = document.getElementById('salesChart');
+            if (ctx) {
+                const salesChart = new Chart(ctx.getContext('2d'), {
+                    type: 'line',
+                    data: {
+                        labels: <?php echo json_encode($chartLabels); ?>,
+                        datasets: [{
+                            label: 'Gross Sales (Tk.)',
+                            data: <?php echo json_encode($chartData); ?>,
+                            borderColor: '#ea6721',
+                            backgroundColor: 'rgba(234, 103, 33, 0.05)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.35,
+                            pointBackgroundColor: '#ea6721',
+                            pointBorderColor: 'rgba(255,255,255,0.7)',
+                            pointHoverRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                                ticks: { color: '#64748b', font: { family: 'Outfit' } }
+                            },
+                            x: {
+                                grid: { display: false },
+                                ticks: { color: '#64748b', font: { family: 'Outfit' } }
+                            }
+                        },
+                        plugins: {
+                            legend: { display: false }
+                        }
+                    }
+                });
+            }
         });
     </script>
 </body>

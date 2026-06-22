@@ -42,6 +42,9 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                 <a href="dashboard.php" class="sidebar-link">
                     <i class="fa-solid fa-chart-pie"></i> Dashboard Stats
                 </a>
+                <a href="pos.php" class="sidebar-link">
+                    <i class="fa-solid fa-cash-register"></i> POS Counter
+                </a>
                 <a href="manage-orders.php" class="sidebar-link">
                     <i class="fa-solid fa-receipt"></i> Live Orders
                 </a>

@@ -328,6 +328,8 @@ function initCheckoutPageValidation() {
             delivery_address: formData.get('delivery_address'),
             delivery_notes: formData.get('delivery_notes'),
             payment_method: formData.get('payment_method'),
+            mfs_sender_number: formData.get('mfs_sender_number') || null,
+            mfs_transaction_id: formData.get('mfs_transaction_id') || null,
             items: cartItems.map(item => ({
                 menu_item_id: item.menu_item_id,
                 quantity: item.quantity

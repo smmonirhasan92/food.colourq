@@ -22,7 +22,9 @@ try {
     $query = "SELECT o.id, o.order_number, o.total_price, o.status, o.delivery_address, o.phone, 
                      o.created_at, o.confirmed_at, o.prepared_at, 
                      o.delivery_man_id, d.name AS delivery_man_name, d.phone AS delivery_man_phone,
-                     u.username, u.email, u.role
+                     u.username, u.email, u.role,
+                     o.order_type, o.discount_percent, o.discount_amount,
+                     o.payment_method, o.mfs_sender_number, o.mfs_transaction_id
               FROM orders o
               JOIN users u ON o.user_id = u.id
               LEFT JOIN delivery_men d ON o.delivery_man_id = d.id
@@ -85,6 +87,12 @@ try {
             'delivery_man_id' => $order['delivery_man_id'] !== null ? (int)$order['delivery_man_id'] : null,
             'delivery_man_name' => $order['delivery_man_name'],
             'delivery_man_phone' => $order['delivery_man_phone'],
+            'order_type' => $order['order_type'],
+            'discount_percent' => (float)($order['discount_percent'] ?? 0),
+            'discount_amount' => (float)($order['discount_amount'] ?? 0),
+            'payment_method' => $order['payment_method'],
+            'mfs_sender_number' => $order['mfs_sender_number'],
+            'mfs_transaction_id' => $order['mfs_transaction_id'],
             // Dynamic dual customer mapping to support direct and nested payload styles
             'username' => $order['username'],
             'email' => $order['email'],
