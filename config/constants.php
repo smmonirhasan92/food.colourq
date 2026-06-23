@@ -50,8 +50,8 @@ define('DB_SQLITE_FILE', BASE_PATH . '/database/food_delivery.db');
 define('DB_MYSQL_HOST', 'localhost');
 define('DB_MYSQL_PORT', '3306');
 define('DB_MYSQL_DB', 'crispybd_food');
-define('DB_MYSQL_USER', 'crispybd_foodadmin');
-define('DB_MYSQL_PASS', 'Sir@@@adminfood');
+define('DB_MYSQL_USER', 'crispybd_admin');
+define('DB_MYSQL_PASS', 'Sir@@@admin123');
 define('DB_MYSQL_CHARSET', 'utf8mb4');
 
 // Order Status definitions
