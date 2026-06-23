@@ -1027,7 +1027,7 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                     <div class="receipt-header">
                         <div class="receipt-logo">Crispy Chicken</div>
                         <div class="receipt-sub">Premium Delivery Service</div>
-                        <div class="receipt-sub">Web: food.colourq.com.bd</div>
+                        <div class="receipt-sub">Web: crispybd.com</div>
                     </div>
                     <div class="receipt-divider"></div>
                     <div class="receipt-title">Order Ticket</div>

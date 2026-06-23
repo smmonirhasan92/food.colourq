@@ -318,7 +318,7 @@ function initCheckoutPageValidation() {
 
         const phone = formData.get('customer_phone') || '';
         const cleanPhone = phone.replace(/[^0-9]/g, '') || Date.now().toString();
-        const dummyEmail = `${cleanPhone}@foodcolourq.com`;
+        const dummyEmail = `${cleanPhone}@crispybd.com`;
 
         const payload = {
             customer_name: formData.get('customer_name'),

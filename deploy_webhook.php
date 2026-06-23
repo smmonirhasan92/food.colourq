@@ -6,7 +6,7 @@
 
 // Secure webhook secret token to prevent unauthorized triggers (optional, but highly recommended)
 // You can set this as a secret in GitHub Webhooks settings.
-define('WEBHOOK_SECRET', 'colourq_food_secret_token');
+define('WEBHOOK_SECRET', 'crispybd_food_secret_token');
 
 // Log file configuration
 $logFile = __DIR__ . '/database/deploy_log.txt';
