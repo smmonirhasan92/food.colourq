@@ -722,8 +722,8 @@
                     <label class="form-label" for="delivery-area">Delivery Area</label>
                     <select class="form-input form-select" name="delivery_area" id="delivery-area" required style="padding: 0.75rem 1rem; background-color: #ffffff;">
                         <option value="" disabled selected>-- Select Delivery Area --</option>
-                        <option value="inside_bhairab">ভৈরব টাউনের ভিতরে (Tk. 50)</option>
-                        <option value="outside_bhairab">ভৈরব টাউনের বাইরে (Tk. 100)</option>
+                        <option value="inside_bhairab">Inside Bhairab Town (Tk. 50)</option>
+                        <option value="outside_bhairab">Outside Bhairab Town (Tk. 100)</option>
                     </select>
                 </div>
 

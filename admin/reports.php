@@ -351,7 +351,7 @@ try {
                             <span style="font-weight: 600; color: var(--text-primary);">Tk. <?php echo number_format($rocketSalesVal, 0); ?></span>
                         </div>
                         <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed var(--border-color); padding-top: 0.5rem;">
-                            <span style="color: var(--text-muted); font-size: 0.9rem;">Cash / Cash on Delivery</span>
+                            <span style="color: var(--text-muted); font-size: 0.9rem;">Cash Payment (POS)</span>
                             <span style="font-weight: 600; color: var(--text-primary);">Tk. <?php echo number_format($codSalesVal, 0); ?></span>
                         </div>
                     </div>

@@ -551,7 +551,7 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                 } else if (order.payment_method === 'cod') {
                     paymentDetailsHtml = `
                         <div style="margin-top: 0.35rem; font-size: 0.75rem; color: var(--text-muted);">
-                            <i class="fa-solid fa-hand-holding-dollar"></i> Cash on Delivery
+                            <i class="fa-solid fa-hand-holding-dollar"></i> Cash Payment
                         </div>
                     `;
                 }
