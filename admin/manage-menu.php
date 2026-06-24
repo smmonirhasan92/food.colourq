@@ -135,14 +135,6 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                                     <option value="dessert">Dessert</option>
                                     <option value="drink">Drink</option>
                                 </select>
-                            </div>
-                            <div class="form-group" style="grid-column: 1 / -1;">
-                                <label class="form-label" for="dish-delivery-charge">Delivery Charge</label>
-                                <select class="form-input form-select" id="dish-delivery-charge">
-                                    <option value="50" selected>Standard - Tk. 50</option>
-                                    <option value="0">Free Delivery - Tk. 0</option>
-                                </select>
-                            </div>
                         </div>
 
                         <div class="form-group">
@@ -398,7 +390,6 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
             const discount_price = discountPriceVal ? parseFloat(discountPriceVal) : '';
             const cost_price = parseFloat(document.getElementById('dish-cost').value);
             const category = document.getElementById('dish-category').value;
-            const delivery_charge = parseInt(document.getElementById('dish-delivery-charge').value);
             const imgUrl = document.getElementById('dish-img').value;
             const desc = document.getElementById('dish-desc').value;
             const fileInput = document.getElementById('dish-file');
@@ -426,7 +417,6 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                 formData.append('price', price);
                 formData.append('cost_price', cost_price);
                 formData.append('discount_price', discount_price);
-                formData.append('delivery_charge', delivery_charge);
                 formData.append('category', category);
                 formData.append('description', desc);
                 formData.append('image_url', imgUrl);
@@ -816,7 +806,6 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
             const discount_price = discountPriceVal ? parseFloat(discountPriceVal) : '';
             const cost_price = parseFloat(document.getElementById('edit-dish-cost').value);
             const category = document.getElementById('edit-dish-category').value;
-            const delivery_charge = parseInt(document.getElementById('edit-dish-delivery-charge').value);
             const imgUrl = document.getElementById('edit-dish-img').value;
             const desc = document.getElementById('edit-dish-desc').value;
             const fileInput = document.getElementById('edit-dish-file');
@@ -844,7 +833,6 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                 formData.append('price', price);
                 formData.append('cost_price', cost_price);
                 formData.append('discount_price', discount_price);
-                formData.append('delivery_charge', isNaN(delivery_charge) ? 50 : delivery_charge);
                 formData.append('category', category);
                 formData.append('description', desc);
                 formData.append('image_url', imgUrl);
@@ -951,13 +939,6 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                         <label class="form-label" for="edit-dish-category">Category</label>
                         <select class="form-input form-select" id="edit-dish-category" style="background-color: rgb(15, 23, 42); border: 1px solid rgba(255, 255, 255, 0.08); color: white;">
                             <!-- Populated dynamically -->
-                        </select>
-                    </div>
-                    <div class="form-group" style="grid-column: 1 / -1;">
-                        <label class="form-label" for="edit-dish-delivery-charge">Delivery Charge</label>
-                        <select class="form-input form-select" id="edit-dish-delivery-charge" style="background-color: rgb(15, 23, 42); border: 1px solid rgba(255, 255, 255, 0.08); color: white;">
-                            <option value="50">Standard - Tk. 50</option>
-                            <option value="0">Free Delivery - Tk. 0</option>
                         </select>
                     </div>
                 </div>

@@ -718,6 +718,15 @@
                     </div>
                 </div>
 
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label class="form-label" for="delivery-area">Delivery Area</label>
+                    <select class="form-input form-select" name="delivery_area" id="delivery-area" required style="padding: 0.75rem 1rem; background-color: #ffffff;">
+                        <option value="" disabled selected>-- Select Delivery Area --</option>
+                        <option value="inside_bhairab">ভৈরব টাউনের ভিতরে (Tk. 50)</option>
+                        <option value="outside_bhairab">ভৈরব টাউনের বাইরে (Tk. 100)</option>
+                    </select>
+                </div>
+
                 <div class="form-group" style="margin-bottom: 1.5rem;">
                     <label class="form-label" for="cust-addr">Delivery Address</label>
                     <input class="form-input" type="text" id="cust-addr" name="delivery_address" required placeholder="House No, Road No, Area / Landmark" style="padding: 0.75rem 1rem;">
@@ -732,8 +741,7 @@
                 <div class="form-group" style="margin-bottom: 1rem;">
                     <label class="form-label">Payment Method</label>
                     <select class="form-input form-select" name="payment_method" id="modal-payment-method" style="padding: 0.75rem 1rem; background-color: #ffffff;">
-                        <option value="cod" selected>Cash on Delivery (COD)</option>
-                        <option value="bkash">bKash</option>
+                        <option value="bkash" selected>bKash</option>
                         <option value="nagad">Nagad</option>
                         <option value="rocket">Rocket</option>
                         <option value="card">Bank Transfer / Card</option>

@@ -43,7 +43,7 @@ if (strpos($contentType, 'application/json') !== false) {
     $price = isset($input['price']) ? (float)$input['price'] : null;
     $cost_price = isset($input['cost_price']) ? (float)$input['cost_price'] : null;
     $discount_price = isset($input['discount_price']) && $input['discount_price'] !== '' ? (float)$input['discount_price'] : null;
-    $delivery_charge = isset($input['delivery_charge']) ? (int)$input['delivery_charge'] : 50;
+    $delivery_charge = 0;
     $category = isset($input['category']) ? trim($input['category']) : null;
     $description = isset($input['description']) ? trim($input['description']) : null;
     $imageUrl = isset($input['image_url']) ? trim($input['image_url']) : null;
@@ -55,7 +55,7 @@ if (strpos($contentType, 'application/json') !== false) {
     $price = isset($_POST['price']) ? (float)$_POST['price'] : null;
     $cost_price = isset($_POST['cost_price']) ? (float)$_POST['cost_price'] : null;
     $discount_price = isset($_POST['discount_price']) && $_POST['discount_price'] !== '' ? (float)$_POST['discount_price'] : null;
-    $delivery_charge = isset($_POST['delivery_charge']) ? (int)$_POST['delivery_charge'] : 50;
+    $delivery_charge = 0;
     $category = isset($_POST['category']) ? trim($_POST['category']) : null;
     $description = isset($_POST['description']) ? trim($_POST['description']) : null;
     $imageUrl = isset($_POST['image_url']) ? trim($_POST['image_url']) : null;

@@ -10,8 +10,8 @@ class ShoppingCartManager {
     constructor() {
         this.storageKey = 'food_coloured_cart';
         this.items = this.loadCart();
-        this.standardDeliveryFee = 50; // 50 Taka standard delivery fee
-        this.taxRate = 0.05; // 5% VAT in BD restaurant bill
+        this.standardDeliveryFee = 0; // Dynamically set from checkout form
+        this.taxRate = 0; // 0% VAT
         this.loyaltyDiscountPercent = 0; // Dynamic loyalty discount percent!
         this.init();
     }
@@ -22,6 +22,21 @@ class ShoppingCartManager {
         this.updateBadge();
         this.renderDrawerItems();
         this.updateSummaryCalculations();
+
+        // Listen for Delivery Area selection
+        const deliveryAreaSelect = document.getElementById('delivery-area');
+        if (deliveryAreaSelect) {
+            deliveryAreaSelect.addEventListener('change', (e) => {
+                if (e.target.value === 'inside_bhairab') {
+                    this.standardDeliveryFee = 50;
+                } else if (e.target.value === 'outside_bhairab') {
+                    this.standardDeliveryFee = 100;
+                } else {
+                    this.standardDeliveryFee = 0;
+                }
+                this.updateSummaryCalculations();
+            });
+        }
     }
 
     /**
@@ -169,13 +184,9 @@ class ShoppingCartManager {
      */
     getTotals() {
         const subtotal = this.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-        const tax = subtotal * this.taxRate;
-        // Dynamic delivery fee: 50 if any cart item requires delivery charge, else 0
-        const hasDeliveryCharge = this.items.some(item => {
-            const dc = item.delivery_charge;
-            return dc === undefined || dc === null ? true : parseInt(dc) > 0;
-        });
-        const deliveryFee = (subtotal > 0 && hasDeliveryCharge) ? this.standardDeliveryFee : 0;
+        const tax = 0; // VAT removed
+        
+        const deliveryFee = subtotal > 0 ? this.standardDeliveryFee : 0;
         const gross = subtotal > 0 ? (subtotal + tax + deliveryFee) : 0;
         const discountAmount = gross * (this.loyaltyDiscountPercent / 100);
         const total = gross - discountAmount;
