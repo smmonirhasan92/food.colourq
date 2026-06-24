@@ -134,9 +134,9 @@ try {
     <!-- Header -->
     <div class="text-center">
         <div class="brand-title">CRISPY CHICKEN</div>
-        <div style="font-size: 11px;">Premium Restaurant & Takeaway</div>
-        <div style="font-size: 11px;">Dhanmondi, Dhaka, Bangladesh</div>
-        <div style="font-size: 11px;">Phone: +8801712345678</div>
+        <div style="font-size: 11px;">Food Court, Nodi Bangla Center Point</div>
+        <div style="font-size: 11px;">Bhairab</div>
+        <div style="font-size: 11px;">Phone: 01681-560308</div>
     </div>
 
     <div class="separator"></div>

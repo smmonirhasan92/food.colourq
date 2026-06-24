@@ -857,12 +857,12 @@
 
                 <div id="modal-mfs-details-section" style="display: none; background: rgba(234, 103, 33, 0.04); border: 1px dashed rgba(234, 103, 33, 0.3); padding: 1.25rem; border-radius: var(--radius-md); margin-bottom: 1.5rem;">
                     <div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 1rem; line-height: 1.5;">
-                        Please send the total bill amount to our Merchant Wallet: <strong style="color: var(--primary);">01712345678</strong> (Choose Payment/Send Money). Once completed, enter the verification details below:
+                        Please send the total bill amount to our Merchant Wallet: <strong style="color: var(--primary);">01681-560308</strong> (Choose Payment/Send Money). Once completed, enter the verification details below:
                     </div>
                     <div class="grid grid-cols-2" style="gap: 1rem;">
                         <div class="form-group" style="margin-bottom: 0;">
                             <label class="form-label" for="mfs-sender" style="font-size: 0.75rem;">Sender Mobile No.</label>
-                            <input class="form-input" type="text" id="mfs-sender" name="mfs_sender_number" placeholder="e.g. 01712345678" style="padding: 0.75rem 1rem;">
+                            <input class="form-input" type="text" id="mfs-sender" name="mfs_sender_number" placeholder="e.g. 01681560308" style="padding: 0.75rem 1rem;">
                         </div>
                         <div class="form-group" style="margin-bottom: 0;">
                             <label class="form-label" for="mfs-txnid" style="font-size: 0.75rem;">Transaction ID (TxnID)</label>
