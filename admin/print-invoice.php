@@ -136,7 +136,7 @@ try {
         <div class="brand-title">CRISPY CHICKEN</div>
         <div style="font-size: 11px;">Food Court, Nodi Bangla Center Point</div>
         <div style="font-size: 11px;">Bhairab Town</div>
-        <div style="font-size: 11px;">Phone: 01681-560308</div>
+        <div style="font-size: 11px;">Phone: 01671-018363</div>
     </div>
 
     <div class="separator"></div>

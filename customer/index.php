@@ -147,7 +147,7 @@
             <div style="font-size: 0.95rem; color: var(--text-secondary); line-height: 1.6; max-width: 500px; margin: 0 auto 1.5rem;">
                 Food Court, Nodi Bangla Center Point<br>
                 Bhairab Town<br>
-                <i class="fa-solid fa-phone" style="color: var(--primary); margin-right: 0.25rem;"></i> Hotline: 01681-560308<br>
+                <i class="fa-solid fa-phone" style="color: var(--primary); margin-right: 0.25rem;"></i> Hotline: 01671-018363<br>
                 <i class="fa-solid fa-wallet" style="color: #ea6721; margin-right: 0.25rem;"></i> bKash (Merchant): 01671018363
             </div>
             <div style="font-size: 0.85rem; color: var(--text-muted); border-top: 1px solid var(--border-color); padding-top: 1.5rem; font-weight: 500;">
