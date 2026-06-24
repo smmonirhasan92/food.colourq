@@ -333,13 +333,10 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                         </div>
                     </div>
 
-                    <!-- Category Tabs -->
+                    <!-- Category Tabs — Dynamically populated from DB via JS -->
                     <div class="pos-cat-tabs" id="pos-category-tabs">
-                        <div class="pos-cat-tab active" onclick="selectCategory('all')">All Dishes</div>
-                        <div class="pos-cat-tab" onclick="selectCategory('appetizer')">Starters</div>
-                        <div class="pos-cat-tab" onclick="selectCategory('main')">Best Sellers</div>
-                        <div class="pos-cat-tab" onclick="selectCategory('dessert')">Dessert</div>
-                        <div class="pos-cat-tab" onclick="selectCategory('drink')">Drinks</div>
+                        <div class="pos-cat-tab active" data-slug="all" onclick="selectCategory('all')">All Dishes</div>
+                        <!-- Additional tabs loaded from api/get-categories.php -->
                     </div>
 
                     <!-- Menu Grid -->
@@ -467,6 +464,39 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
         let selectedCategoryFilter = 'all';
         let debounceTimer;
 
+        // Decode HTML entities stored in DB
+        function decodeHtmlEntities(str) {
+            if (!str) return '';
+            const txt = document.createElement('textarea');
+            txt.innerHTML = str;
+            let decoded = txt.value;
+            for (let i = 0; i < 4; i++) {
+                txt.innerHTML = decoded;
+                if (txt.value === decoded) break;
+                decoded = txt.value;
+            }
+            return decoded;
+        }
+
+        async function loadPOSCategories() {
+            try {
+                const res = await fetch('../api/get-categories.php');
+                const result = await res.json();
+                if (result.success && result.data) {
+                    const tabsContainer = document.getElementById('pos-category-tabs');
+                    if (!tabsContainer) return;
+                    // Keep the 'All Dishes' tab, append the rest
+                    let html = `<div class="pos-cat-tab active" data-slug="all" onclick="selectCategory('all')">All Dishes</div>`;
+                    result.data.forEach(cat => {
+                        html += `<div class="pos-cat-tab" data-slug="${cat.slug}" onclick="selectCategory('${cat.slug}')">${cat.name}</div>`;
+                    });
+                    tabsContainer.innerHTML = html;
+                }
+            } catch (e) {
+                console.warn('POS categories fallback:', e);
+            }
+        }
+
         async function fetchPOSCatalog() {
             try {
                 const response = await fetch('../api/get-all-menu-items.php');
@@ -512,30 +542,37 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
             };
 
             grid.innerHTML = filtered.map(item => {
-                let img = item.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=600';
-                if (img.startsWith('images/')) {
-                    const filename = img.substring(7);
-                    if (premiumImageMap[filename]) img = premiumImageMap[filename];
+                // Resolve image path
+                let img = item.image_url || '';
+                if (img.startsWith('../images/')) {
+                    // Correct as-is from admin/ context
+                } else if (img.startsWith('images/')) {
+                    // keep as-is
+                } else if (img && !img.startsWith('http') && !img.startsWith('/')) {
+                    img = '../images/' + img;
                 }
+                if (!img) img = '../assets/img/placeholder.jpg';
 
-                const priceHtml = item.discount_price !== null && item.discount_price > 0 ? 
-                    `Tk. ${item.discount_price.toFixed(0)} <del style="font-size: 0.75rem; color: var(--text-muted); margin-left: 0.35rem;">Tk. ${item.price.toFixed(0)}</del>` : 
+                const safeName = decodeHtmlEntities(item.name);
+
+                const priceHtml = item.discount_price !== null && item.discount_price > 0 ?
+                    `Tk. ${item.discount_price.toFixed(0)} <del style="font-size: 0.75rem; color: var(--text-muted); margin-left: 0.35rem;">Tk. ${item.price.toFixed(0)}</del>` :
                     `Tk. ${item.price.toFixed(0)}`;
 
                 let variationsDropdown = '';
                 if (item.variations && item.variations.length > 0) {
                     variationsDropdown = `
                         <select class="form-input form-select pos-var-select" style="font-size: 0.75rem; padding: 0.25rem 0.5rem; margin-top: 0.5rem; height: auto; background: var(--bg-dark); color: white; border-color: rgba(255,255,255,0.08);" onclick="event.stopPropagation()">
-                            ${item.variations.map(v => `<option value="${v.id}">${v.name} (Tk. ${parseFloat(v.price).toFixed(0)})</option>`).join('')}
+                            ${item.variations.map(v => `<option value="${v.id}">${decodeHtmlEntities(v.name)} (Tk. ${parseFloat(v.price).toFixed(0)})</option>`).join('')}
                         </select>
                     `;
                 }
 
                 return `
                     <div class="pos-item-card" onclick="handlePOSCardClick(event, ${item.id})">
-                        <img src="${img}" alt="${item.name}" class="pos-item-img" onerror="this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=600'">
+                        <img src="${img}" alt="${safeName}" class="pos-item-img" onerror="this.src='../assets/img/placeholder.jpg'">
                         <div class="pos-item-body">
-                            <h4 class="pos-item-title">${item.name}</h4>
+                            <h4 class="pos-item-title">${safeName}</h4>
                             <span class="pos-item-price">${priceHtml}</span>
                             ${variationsDropdown}
                         </div>
@@ -548,11 +585,7 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
             selectedCategoryFilter = category;
             const tabs = document.querySelectorAll('.pos-cat-tab');
             tabs.forEach(tab => {
-                if (tab.textContent.toLowerCase().includes(category === 'all' ? 'all' : category === 'appetizer' ? 'starter' : category === 'main' ? 'seller' : category)) {
-                    tab.classList.add('active');
-                } else {
-                    tab.classList.remove('active');
-                }
+                tab.classList.toggle('active', tab.dataset.slug === category);
             });
             renderPOSGrid(menuItems);
         }
@@ -835,7 +868,10 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
         }
 
         // Initialize Catalog on load
-        window.addEventListener('load', fetchPOSCatalog);
+        window.addEventListener('load', async () => {
+            await loadPOSCategories();
+            fetchPOSCatalog();
+        });
     </script>
 </body>
 </html>

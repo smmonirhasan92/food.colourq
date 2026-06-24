@@ -193,6 +193,20 @@
             return url;
         }
 
+        // Decode HTML entities stored in DB (e.g. &amp;amp; → &)
+        function decodeHtmlEntities(str) {
+            if (!str) return '';
+            const txt = document.createElement('textarea');
+            txt.innerHTML = str;
+            let decoded = txt.value;
+            for (let i = 0; i < 4; i++) {
+                txt.innerHTML = decoded;
+                if (txt.value === decoded) break;
+                decoded = txt.value;
+            }
+            return decoded;
+        }
+
         let globalCategories = [];
 
         async function loadCategories() {
@@ -278,6 +292,10 @@
                             items.forEach(item => {
                                 totalItems++;
 
+                                // Decode HTML entities in name/description
+                                const safeItemName = decodeHtmlEntities(item.name);
+                                const safeItemDesc  = decodeHtmlEntities(item.description);
+
                                 // Resolve image path — DB stores '../images/dish_xxx.png' (relative from admin/)
                                 // From customer/ folder, '../images/' correctly points to /images/ at root
                                 let img = item.image_url || '';
@@ -306,21 +324,21 @@
                                 const hasDiscount = item.discount_price !== null && item.discount_price > 0;
                                 const hasVariations = item.variations && item.variations.length > 0;
                                 const activePrice = hasVariations ? parseFloat(item.variations[0].price) : (hasDiscount ? item.discount_price : item.price);
-                                const priceHtml = hasVariations ? 
+                                const priceHtml = hasVariations ?
                                     `Tk. ${activePrice.toFixed(0)}` :
-                                    (hasDiscount ? 
-                                        `Tk. ${item.discount_price.toFixed(0)} <del style="font-size: 0.85rem; color: var(--text-muted); margin-left: 0.5rem;">Tk. ${item.price.toFixed(0)}</del>` : 
+                                    (hasDiscount ?
+                                        `Tk. ${item.discount_price.toFixed(0)} <del style="font-size: 0.85rem; color: var(--text-muted); margin-left: 0.5rem;">Tk. ${item.price.toFixed(0)}</del>` :
                                         `Tk. ${item.price.toFixed(0)}`);
 
                                 htmlContent += `
                                     <div class="glass-panel glass-panel-interactive menu-card" data-category="${categoryKey}">
                                         <div class="menu-card-img-container">
                                             <span class="menu-card-badge">${badge}</span>
-                                            <img src="${optimizedImg}" alt="${item.name}" class="menu-card-img" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=60&w=450'">
+                                            <img src="${optimizedImg}" alt="${safeItemName}" class="menu-card-img" loading="lazy" onerror="this.src='../assets/img/placeholder.jpg'">
                                         </div>
                                         <div class="menu-card-body">
-                                            <h3 class="menu-card-title">${item.name}</h3>
-                                            <p class="menu-card-desc">${item.description}</p>
+                                            <h3 class="menu-card-title">${safeItemName}</h3>
+                                            <p class="menu-card-desc">${safeItemDesc}</p>
                                             ${variationsDropdown}
                                             <div class="menu-card-footer" style="flex-direction: column; align-items: stretch; gap: 0.75rem; border-top: 1px solid var(--border-color); padding-top: 1rem; width: 100%;">
                                                 <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">

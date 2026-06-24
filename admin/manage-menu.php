@@ -192,7 +192,7 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                 <section style="display: flex; flex-direction: column; gap: 1.5rem;">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <h3 style="font-family: var(--font-heading); font-size: 1.25rem; color: var(--text-primary);">Active Offerings</h3>
-                        <span style="font-size: 0.9rem; color: var(--text-muted); font-weight: 500;">Showing 0 Recipes</span>
+                        <span id="catalog-count-span" style="font-size: 0.9rem; color: var(--text-muted); font-weight: 500;">Showing 0 Recipes</span>
                     </div>
 
                     <div class="grid grid-cols-2" id="admin-catalog-grid">
@@ -211,6 +211,21 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
     <script>
         let activeItems = [];
 
+        // Decode HTML entities stored in DB (e.g. &amp;amp; → &)
+        function decodeHtmlEntities(str) {
+            if (!str) return '';
+            const txt = document.createElement('textarea');
+            txt.innerHTML = str;
+            let decoded = txt.value;
+            // Repeat decode for multi-encoded strings (e.g. &amp;amp;amp;)
+            for (let i = 0; i < 4; i++) {
+                txt.innerHTML = decoded;
+                if (txt.value === decoded) break;
+                decoded = txt.value;
+            }
+            return decoded;
+        }
+
         async function fetchMenuItems() {
             try {
                 const response = await fetch('../api/get-all-menu-items.php');
@@ -223,35 +238,17 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                     throw new Error(result.message || 'API error');
                 }
             } catch (error) {
-                console.warn('[CatalogDesk] Falling back to default mockup catalog:', error);
-                const fallbackItems = [
-                    {
-                        id: 1,
-                        name: "Avocado Superfood Bowl",
-                        description: "Crispy greens, poached egg, cream cheese, avocado mash.",
-                        price: 14.99,
-                        category: "Organic Bowls",
-                        image_url: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=600",
-                        is_available: 1
-                    },
-                    {
-                        id: 2,
-                        name: "Pan-Seared Organic Salmon",
-                        description: "Atlantic salmon, glazed garden greens, butter mash.",
-                        price: 22.50,
-                        category: "Gourmet Mains",
-                        image_url: "https://images.unsplash.com/photo-1467003909585-2f8a72700288?auto=format&fit=crop&q=80&w=600",
-                        is_available: 1
-                    }
-                ];
-                activeItems = fallbackItems;
-                renderCatalog(fallbackItems);
+                console.error('[CatalogDesk] Failed to load menu:', error);
+                const grid = document.getElementById('admin-catalog-grid');
+                if (grid) {
+                    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--text-muted);"><i class="fa-solid fa-circle-exclamation" style="font-size:2rem;color:#ef4444;margin-bottom:1rem;"></i><p>মেনু লোড হয়নি। পেজ রিফ্রেশ করুন।</p></div>`;
+                }
             }
         }
 
         function renderCatalog(items) {
             const grid = document.getElementById('admin-catalog-grid');
-            const countSpan = document.querySelector('span[style*="Showing"]');
+            const countSpan = document.getElementById('catalog-count-span');
             if (!grid) return;
 
             if (countSpan) {
@@ -278,42 +275,33 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                 const buttonText = item.is_available === 1 ? 'Disable' : 'Enable';
                 const buttonIcon = item.is_available === 1 ? 'fa-eye-slash' : 'fa-eye';
 
-                // Premium image resolver to map database names to high-res mouth-watering photos
-                const premiumImageMap = {
-                    'truffle_garlic_bread.jpg': 'https://images.unsplash.com/photo-1619535860434-ba1d8fa12536?auto=format&fit=crop&q=80&w=600',
-                    'crispy_calamari.jpg': 'https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&q=80&w=600',
-                    'stuffed_mushrooms.jpg': 'https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?auto=format&fit=crop&q=80&w=600',
-                    'tomato_bruschetta.jpg': 'https://images.unsplash.com/photo-1572656631137-7935297eff55?auto=format&fit=crop&q=80&w=600',
-                    'filet_mignon.jpg': 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&q=80&w=600',
-                    'seared_salmon.jpg': 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?auto=format&fit=crop&q=80&w=600',
-                    'mushroom_risotto.jpg': 'https://images.unsplash.com/photo-1476124369491-e77d540d907f?auto=format&fit=crop&q=80&w=600',
-                    'butter_chicken.jpg': 'https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?auto=format&fit=crop&q=80&w=600',
-                    'wagyu_burger.jpg': 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&q=80&w=600',
-                    'chocolate_lava.jpg': 'https://images.unsplash.com/photo-1606313564200-e75d5e30476c?auto=format&fit=crop&q=80&w=600',
-                    'tiramisu.jpg': 'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?auto=format&fit=crop&q=80&w=600',
-                    'cheesecake.jpg': 'https://images.unsplash.com/photo-1524351199679-46cddf530c04?auto=format&fit=crop&q=80&w=600',
-                    'mango_smoothie.jpg': 'https://images.unsplash.com/photo-1553530666-ba11a7da3888?auto=format&fit=crop&q=80&w=600',
-                    'iced_macchiato.jpg': 'https://images.unsplash.com/photo-1557925923-cd4648e21187?auto=format&fit=crop&q=80&w=600',
-                    'virgin_mojito.jpg': 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&q=80&w=600'
-                };
-
-                let img = item.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=600';
-                if (img.startsWith('images/')) {
-                    const filename = img.substring(7);
-                    if (premiumImageMap[filename]) {
-                        img = premiumImageMap[filename];
-                    }
+                // Resolve image path — DB stores '../images/dish_xxx.png' (relative from admin/ saves as ../images/)
+                // From admin/ folder, '../images/' needs to become 'images/' relative to domain root
+                // But since admin/ is one level deep, '../images/' correctly goes to /images/
+                let img = item.image_url || '';
+                if (img.startsWith('../images/')) {
+                    // Correct: ../images/ from admin/ points to /images/ at root
+                } else if (img.startsWith('images/')) {
+                    // Already relative to root — keep as-is
+                } else if (img && !img.startsWith('http') && !img.startsWith('/')) {
+                    img = '../images/' + img;
                 }
+                if (!img) {
+                    img = '../assets/img/placeholder.jpg';
+                }
+
+                const safeItemName = decodeHtmlEntities(item.name);
+                const safeItemDesc = decodeHtmlEntities(item.description);
 
                 return `
                     <div class="glass-panel menu-card" id="catalog-item-${item.id}" style="opacity: ${opacity};">
                         <div class="menu-card-img-container" style="aspect-ratio: 16/9;">
                             <span class="menu-card-badge" style="background: ${bgStyle}">${displayCategory}</span>
-                            <img src="${img}" alt="${item.name}" class="menu-card-img" onerror="this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=600'">
+                            <img src="${img}" alt="${safeItemName}" class="menu-card-img" onerror="this.src='../assets/img/placeholder.jpg'">
                         </div>
                         <div class="menu-card-body" style="gap: 0.5rem; padding: 1.25rem;">
-                            <h4 class="menu-card-title" style="font-size: 1.1rem; color: var(--text-primary);">${item.name}</h4>
-                            <p class="menu-card-desc" style="font-size: 0.8rem; color: var(--text-muted);">${item.description}</p>
+                            <h4 class="menu-card-title" style="font-size: 1.1rem; color: var(--text-primary);">${safeItemName}</h4>
+                            <p class="menu-card-desc" style="font-size: 0.8rem; color: var(--text-muted);">${safeItemDesc}</p>
                             
                             ${item.variations && item.variations.length > 0 ? `
                                 <div class="menu-card-variations" style="display: flex; flex-direction: column; gap: 0.25rem; margin: 0.25rem 0 0.5rem 0; font-size: 0.75rem; background: rgba(255,255,255,0.02); padding: 0.5rem; border-radius: var(--radius-sm); border: 1px solid rgba(255,255,255,0.05);">
