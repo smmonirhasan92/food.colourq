@@ -570,7 +570,7 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
 
                 return `
                     <div class="pos-item-card" onclick="handlePOSCardClick(event, ${item.id})">
-                        <img src="${img}" alt="${safeName}" class="pos-item-img" onerror="this.src='../assets/img/placeholder.jpg'">
+                        <img src="${img}" alt="${safeName}" class="pos-item-img" onerror="this.onerror=null; this.src='../assets/img/placeholder.jpg';">
                         <div class="pos-item-body">
                             <h4 class="pos-item-title">${safeName}</h4>
                             <span class="pos-item-price">${priceHtml}</span>

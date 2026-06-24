@@ -334,7 +334,7 @@
                                     <div class="glass-panel glass-panel-interactive menu-card" data-category="${categoryKey}">
                                         <div class="menu-card-img-container">
                                             <span class="menu-card-badge">${badge}</span>
-                                            <img src="${optimizedImg}" alt="${safeItemName}" class="menu-card-img" loading="lazy" onerror="this.src='../assets/img/placeholder.jpg'">
+                                            <img src="${optimizedImg}" alt="${safeItemName}" class="menu-card-img" loading="lazy" onerror="this.onerror=null; this.src='../assets/img/placeholder.jpg';">
                                         </div>
                                         <div class="menu-card-body">
                                             <h3 class="menu-card-title">${safeItemName}</h3>

@@ -297,7 +297,7 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                     <div class="glass-panel menu-card" id="catalog-item-${item.id}" style="opacity: ${opacity};">
                         <div class="menu-card-img-container" style="aspect-ratio: 16/9;">
                             <span class="menu-card-badge" style="background: ${bgStyle}">${displayCategory}</span>
-                            <img src="${img}" alt="${safeItemName}" class="menu-card-img" onerror="this.src='../assets/img/placeholder.jpg'">
+                            <img src="${img}" alt="${safeItemName}" class="menu-card-img" onerror="this.onerror=null; this.src='../assets/img/placeholder.jpg';">
                         </div>
                         <div class="menu-card-body" style="gap: 0.5rem; padding: 1.25rem;">
                             <h4 class="menu-card-title" style="font-size: 1.1rem; color: var(--text-primary);">${safeItemName}</h4>
