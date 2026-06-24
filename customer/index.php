@@ -324,10 +324,16 @@
                                 const hasDiscount = item.discount_price !== null && item.discount_price > 0;
                                 const hasVariations = item.variations && item.variations.length > 0;
                                 const activePrice = hasVariations ? parseFloat(item.variations[0].price) : (hasDiscount ? item.discount_price : item.price);
+                                let discountBadgeHtml = '';
+                                if (hasDiscount && !hasVariations) {
+                                    const discountPercent = Math.round(((item.price - item.discount_price) / item.price) * 100);
+                                    discountBadgeHtml = ` <span style="font-size: 0.75rem; background: var(--primary); color: white; padding: 0.15rem 0.35rem; border-radius: 4px; font-weight: 700; margin-left: 0.35rem; vertical-align: middle;">-${discountPercent}%</span>`;
+                                }
+
                                 const priceHtml = hasVariations ?
                                     `Tk. ${activePrice.toFixed(0)}` :
                                     (hasDiscount ?
-                                        `Tk. ${item.discount_price.toFixed(0)} <del style="font-size: 0.85rem; color: var(--text-muted); margin-left: 0.5rem;">Tk. ${item.price.toFixed(0)}</del>` :
+                                        `Tk. ${item.discount_price.toFixed(0)} <del style="font-size: 0.85rem; color: var(--text-muted); margin-left: 0.5rem;">Tk. ${item.price.toFixed(0)}</del>${discountBadgeHtml}` :
                                         `Tk. ${item.price.toFixed(0)}`);
 
                                 htmlContent += `

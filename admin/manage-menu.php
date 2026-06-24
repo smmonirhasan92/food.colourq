@@ -119,7 +119,7 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                                 <input class="form-input" type="number" id="dish-price" step="1" required placeholder="e.g. 450">
                             </div>
                             <div class="form-group">
-                                <label class="form-label" for="dish-discount-price">Discount (Tk.)</label>
+                                <label class="form-label" for="dish-discount-price">Offer Price (Tk.)</label>
                                 <input class="form-input" type="number" id="dish-discount-price" step="1" placeholder="Optional">
                             </div>
                             <div class="form-group">
@@ -319,7 +319,7 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                                 <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
                                     <span class="menu-card-price" style="font-size: 1.15rem; color: var(--primary);">
                                         ${item.discount_price && item.discount_price > 0 ? 
-                                            `Tk. ${item.discount_price.toFixed(0)} <del style="font-size: 0.8rem; color: var(--text-muted); margin-left: 0.35rem;">Tk. ${item.price.toFixed(0)}</del>` : 
+                                            `Tk. ${item.discount_price.toFixed(0)} <del style="font-size: 0.8rem; color: var(--text-muted); margin-left: 0.35rem;">Tk. ${item.price.toFixed(0)}</del> <span style="font-size: 0.7rem; background: var(--primary); color: white; padding: 0.15rem 0.35rem; border-radius: 4px; font-weight: 700; margin-left: 0.35rem; vertical-align: middle;">-${Math.round(((item.price - item.discount_price) / item.price) * 100)}%</span>` : 
                                             `Tk. ${item.price.toFixed(0)}`}
                                     </span>
                                     ${item.delivery_charge === 0 ? 
@@ -938,7 +938,7 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                         <input class="form-input" type="number" id="edit-dish-price" step="1" required placeholder="e.g. 450" style="background-color: rgba(15, 23, 42, 0.5); border: 1px solid rgba(255, 255, 255, 0.08); color: white;">
                     </div>
                     <div class="form-group">
-                        <label class="form-label" for="edit-dish-discount-price">Discount (Tk.)</label>
+                        <label class="form-label" for="edit-dish-discount-price">Offer Price (Tk.)</label>
                         <input class="form-input" type="number" id="edit-dish-discount-price" step="1" placeholder="Optional" style="background-color: rgba(15, 23, 42, 0.5); border: 1px solid rgba(255, 255, 255, 0.08); color: white;">
                     </div>
                     <div class="form-group">
