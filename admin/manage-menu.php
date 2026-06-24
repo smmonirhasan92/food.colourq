@@ -282,7 +282,7 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                 if (img.startsWith('../images/')) {
                     // Correct: ../images/ from admin/ points to /images/ at root
                 } else if (img.startsWith('images/')) {
-                    // Already relative to root — keep as-is
+                    img = '../' + img;
                 } else if (img && !img.startsWith('http') && !img.startsWith('/')) {
                     img = '../images/' + img;
                 }
@@ -409,6 +409,7 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                 submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Saving...`;
             }
 
+            try {
                 const variations = [];
                 const varRows = document.querySelectorAll('#add-variations-container .variation-row');
                 varRows.forEach(row => {

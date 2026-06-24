@@ -547,7 +547,7 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                 if (img.startsWith('../images/')) {
                     // Correct as-is from admin/ context
                 } else if (img.startsWith('images/')) {
-                    // keep as-is
+                    img = '../' + img;
                 } else if (img && !img.startsWith('http') && !img.startsWith('/')) {
                     img = '../images/' + img;
                 }
