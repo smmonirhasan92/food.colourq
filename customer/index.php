@@ -147,10 +147,11 @@
             <div style="font-size: 0.95rem; color: var(--text-secondary); line-height: 1.6; max-width: 500px; margin: 0 auto 1.5rem;">
                 Food Court, Nodi Bangla Center Point<br>
                 Bhairab Town<br>
-                Phone: 01681-560308
+                <i class="fa-solid fa-phone" style="color: var(--primary); margin-right: 0.25rem;"></i> Hotline: 01681-560308<br>
+                <i class="fa-solid fa-wallet" style="color: #ea6721; margin-right: 0.25rem;"></i> bKash (Merchant): 01671018363
             </div>
             <div style="font-size: 0.85rem; color: var(--text-muted); border-top: 1px solid var(--border-color); padding-top: 1.5rem; font-weight: 500;">
-                Powered By :- Crispy Chicken
+                Powerd By :- Crispy Chicken
             </div>
         </div>
     </footer>
@@ -768,15 +769,49 @@
             const paymentSelect = document.getElementById('modal-payment-method');
             const cardSection = document.getElementById('modal-card-details-section');
             const mfsSection = document.getElementById('modal-mfs-details-section');
+            const qrContainer = document.getElementById('payment-qr-container');
+            const instructionsText = document.getElementById('payment-instructions-text');
+            const mfsSenderInput = document.getElementById('mfs-sender');
             
             if (paymentSelect) {
                 const handlePaymentChange = () => {
                     const method = paymentSelect.value;
                     if (cardSection) {
-                        cardSection.style.display = (method === 'card') ? 'block' : 'none';
+                        cardSection.style.display = 'none'; // Managed via bank transfer option
                     }
                     if (mfsSection) {
-                        mfsSection.style.display = (['bkash', 'nagad', 'rocket'].includes(method)) ? 'block' : 'none';
+                        if (['bkash', 'nagad', 'rocket', 'card'].includes(method)) {
+                            mfsSection.style.display = 'block';
+                            
+                            // Dynamically update instructions, placeholders, and show/hide QR code
+                            if (method === 'bkash') {
+                                if (qrContainer) qrContainer.style.display = 'block';
+                                if (instructionsText) {
+                                    instructionsText.innerHTML = 'বিকাশ অ্যাপের পেমেন্ট অপশন ব্যবহার করে নিচের কিউআর কোডটি স্ক্যান করুন অথবা আমাদের মার্চেন্ট নাম্বার <strong>01671018363</strong>-এ পেমেন্ট সম্পন্ন করে নিচের ফর্মটি পূরণ করুন:';
+                                }
+                                if (mfsSenderInput) mfsSenderInput.placeholder = 'যেমন: 01671018363';
+                            } else if (method === 'nagad') {
+                                if (qrContainer) qrContainer.style.display = 'block';
+                                if (instructionsText) {
+                                    instructionsText.innerHTML = 'নগদ অ্যাপের পেমেন্ট অপশন ব্যবহার করে নিচের কিউআর কোডটি স্ক্যান করুন অথবা আমাদের মার্চেন্ট নাম্বার <strong>01671018363</strong>-এ পেমেন্ট সম্পন্ন করে নিচের ফর্মটি পূরণ করুন:';
+                                }
+                                if (mfsSenderInput) mfsSenderInput.placeholder = 'যেমন: 01671018363';
+                            } else if (method === 'card') {
+                                if (qrContainer) qrContainer.style.display = 'block';
+                                if (instructionsText) {
+                                    instructionsText.innerHTML = 'আপনার ব্যাংক অ্যাপের মাধ্যমে পেমেন্ট করতে নিচের কিউআর কোডটি স্ক্যান করুন অথবা মার্চেন্ট নাম্বার <strong>01671018363</strong>-এ ট্রান্সফার সম্পন্ন করে নিচের ফর্মটি পূরণ করুন:';
+                                }
+                                if (mfsSenderInput) mfsSenderInput.placeholder = 'যেমন: 01671018363';
+                            } else if (method === 'rocket') {
+                                if (qrContainer) qrContainer.style.display = 'none';
+                                if (instructionsText) {
+                                    instructionsText.innerHTML = 'আমাদের রকেট নাম্বারে পেমেন্ট সম্পন্ন করে নিচের ফর্মটি পূরণ করুন:';
+                                }
+                                if (mfsSenderInput) mfsSenderInput.placeholder = 'যেমন: 017XXXXXXXX';
+                            }
+                        } else {
+                            mfsSection.style.display = 'none';
+                        }
                     }
                 };
                 paymentSelect.addEventListener('change', handlePaymentChange);
@@ -845,40 +880,42 @@
                     <label class="form-label">Payment Method</label>
                     <select class="form-input form-select" name="payment_method" id="modal-payment-method" style="padding: 0.75rem 1rem; background-color: #ffffff;">
                         <option value="cod" selected>Cash on Delivery (COD)</option>
-                        <option value="bkash">bKash (MFS)</option>
-                        <option value="nagad">Nagad (MFS)</option>
-                        <option value="rocket">Rocket (MFS)</option>
-                        <option value="card">Credit / Debit Card</option>
+                        <option value="bkash">bKash</option>
+                        <option value="nagad">Nagad</option>
+                        <option value="rocket">Rocket</option>
+                        <option value="card">Bank Transfer / Card</option>
                         <option value="crypto">Cryptocurrency Gateway</option>
                     </select>
                 </div>
 
                 <div id="modal-card-details-section" style="display: none;">
-                    <div class="form-group" style="margin-bottom: 1rem;">
-                        <label class="form-label" for="card-num">Card Number</label>
-                        <input class="form-input" type="text" id="card-num" placeholder="0000 0000 0000 0000" maxlength="19" style="padding: 0.75rem 1rem;">
-                    </div>
-
-                    <div class="grid grid-cols-2" style="gap: 1rem; margin-bottom: 1rem;">
-                        <div class="form-group" style="margin-bottom: 0;">
-                            <label class="form-label" for="card-expiry">Expiry Date</label>
-                            <input class="form-input" type="text" id="card-expiry" placeholder="MM/YY" maxlength="5" style="padding: 0.75rem 1rem;">
-                        </div>
-                        <div class="form-group" style="margin-bottom: 0;">
-                            <label class="form-label" for="card-cvc">CVC Code</label>
-                            <input class="form-input" type="password" id="card-cvc" placeholder="***" maxlength="4" style="padding: 0.75rem 1rem;">
-                        </div>
-                    </div>
+                    <!-- Managed dynamically -->
                 </div>
 
-                <div id="modal-mfs-details-section" style="display: none; background: rgba(234, 103, 33, 0.04); border: 1px dashed rgba(234, 103, 33, 0.3); padding: 1.25rem; border-radius: var(--radius-md); margin-bottom: 1.5rem;">
-                    <div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 1rem; line-height: 1.5;">
-                        Please send the total bill amount to our Merchant Wallet: <strong style="color: var(--primary);">01681-560308</strong> (Choose Payment/Send Money). Once completed, enter the verification details below:
+                <div id="modal-mfs-details-section" style="display: none; background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.08); padding: 1.5rem; border-radius: var(--radius-md); margin-bottom: 1.5rem; box-shadow: inset 0 1px 1px rgba(255,255,255,0.05);">
+                    <!-- QR Code Display Area (Visible for bkash, nagad, card) -->
+                    <div id="payment-qr-container" style="text-align: center; margin-bottom: 1.25rem; display: none;">
+                        <img src="../images/payment_qr.png" alt="Payment QR Code" style="max-width: 170px; width: 100%; height: auto; border-radius: 12px; border: 4px solid #ffffff; box-shadow: 0 8px 24px rgba(0,0,0,0.3); display: inline-block;">
+                        <div style="margin-top: 0.85rem; font-size: 1rem; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                            <span>Wallet Number:</span> 
+                            <span style="color: var(--primary); font-size: 1.15rem; font-family: var(--font-heading); letter-spacing: 0.5px;" id="merchant-num-display">01671018363</span>
+                            <button type="button" onclick="navigator.clipboard.writeText('01671018363'); alert('Merchant number copied!');" style="background: rgba(234, 103, 33, 0.1); border: 1px solid rgba(234, 103, 33, 0.3); color: var(--primary); cursor: pointer; padding: 0.2rem 0.4rem; border-radius: 4px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 0.25rem;">
+                                <i class="fa-solid fa-copy"></i> Copy
+                            </button>
+                        </div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">
+                            Scan to Pay (bKash / Nagad / Bank Transfer)
+                        </div>
                     </div>
+                    
+                    <div id="payment-instructions-text" style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.25rem; line-height: 1.5;">
+                        Please send the total bill amount to our Merchant Wallet: <strong style="color: var(--primary);">01671018363</strong>. Once completed, enter the verification details below:
+                    </div>
+                    
                     <div class="grid grid-cols-2" style="gap: 1rem;">
                         <div class="form-group" style="margin-bottom: 0;">
                             <label class="form-label" for="mfs-sender" style="font-size: 0.75rem;">Sender Mobile No.</label>
-                            <input class="form-input" type="text" id="mfs-sender" name="mfs_sender_number" placeholder="e.g. 01681560308" style="padding: 0.75rem 1rem;">
+                            <input class="form-input" type="text" id="mfs-sender" name="mfs_sender_number" placeholder="e.g. 01671018363" style="padding: 0.75rem 1rem;">
                         </div>
                         <div class="form-group" style="margin-bottom: 0;">
                             <label class="form-label" for="mfs-txnid" style="font-size: 0.75rem;">Transaction ID (TxnID)</label>
