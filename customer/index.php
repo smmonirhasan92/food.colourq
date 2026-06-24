@@ -11,6 +11,33 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- GSAP for micro-animations fallback testing -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js" defer></script>
+    <style>
+        @keyframes fadeInUpHero {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        @keyframes floatHero {
+            0%, 100% {
+                transform: translateY(0) rotate(0deg);
+            }
+            50% {
+                transform: translateY(-12px) rotate(1.5deg);
+            }
+        }
+        .hero-fade-in {
+            opacity: 0;
+            animation: fadeInUpHero 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        .hero-image-floating {
+            animation: floatHero 6s ease-in-out infinite;
+        }
+    </style>
 </head>
 <body>
 
@@ -48,10 +75,10 @@
         <section class="burger-assembly-container">
             <div class="burger-assembly-info">
                 <span class="status-badge status-preparing" style="background: rgba(234, 103, 33, 0.08); color: var(--primary); border: 1px solid rgba(234, 103, 33, 0.15); width: fit-content; font-size: 0.9rem;">
-                    <i class="fa-solid fa-crown"></i> Crispy Chicken Burger
+                    <i class="fa-solid fa-crown"></i> Hot & Fresh Combo
                 </span>
-                <h1 style="font-size: 2.5rem; margin-top: 1rem; margin-bottom: 1rem; font-family: var(--font-heading); color: var(--text-primary);">Crispy Chicken Burger</h1>
-                <p style="font-size: 1.1rem; line-height: 1.7; color: var(--text-secondary); margin-bottom: 1.5rem;">A perfect harmony of crispy and juicy flavors! Our signature masterpiece features a golden-crunch crispy chicken patty, fresh lettuce, melted cheddar cheese, and our secret special sauce. Experience premium taste in every single bite!</p>
+                <h1 style="font-size: 2.5rem; margin-top: 1rem; margin-bottom: 1rem; font-family: var(--font-heading); color: var(--text-primary);">Hot & Crispy Chicken Combo</h1>
+                <p style="font-size: 1.1rem; line-height: 1.7; color: var(--text-secondary); margin-bottom: 1.5rem;">Indulge in our signature hot crispy chicken combo! Perfectly golden-fried crispy chicken served with hot golden French fries and a refreshing cold drink. The ultimate gourmet feast prepared fresh for you!</p>
                 <div style="display: flex; gap: 1rem; align-items: center; margin-top: 1rem;">
                     <a href="#menu-catalog-section" class="btn btn-primary btn-lg">
                         <i class="fa-solid fa-utensils"></i> Order Menu
@@ -60,38 +87,15 @@
             </div>
             
             <!-- Burger Canvas Wrapper -->
-            <div class="burger-canvas-container">
-                <div class="glow-burst" id="burger-glow"></div>
-                <div class="steam-smoke-particles" id="burger-steam">
+            <div class="burger-canvas-container hero-fade-in">
+                <div class="glow-burst active" id="burger-glow" style="opacity: 0.85;"></div>
+                <div class="steam-smoke-particles" id="burger-steam" style="opacity: 1;">
                     <div class="steam-puff steam-puff-1"></div>
                     <div class="steam-puff steam-puff-2"></div>
                     <div class="steam-puff steam-puff-3"></div>
                 </div>
                 <div class="burger-canvas-wrapper" id="burger-assembly-canvas" style="display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative;">
-                    <!-- Layer 1: Top Bun -->
-                    <div class="burger-layer layer-top-bun" style="transform: translateY(-380px); opacity: 1; display: flex; justify-content: center; width: 100%;">
-                        <img src="../images/burger_assembly/top_bun.png?v=1.0.4" alt="Top Bun" style="width: 260px; height: auto; filter: drop-shadow(0px 8px 15px rgba(0,0,0,0.15)); object-fit: contain;">
-                    </div>
-                    <!-- Layer 2: Tomato Slices -->
-                    <div class="burger-layer layer-tomato" style="transform: translateY(-240px) translateX(-40px) rotate(-20deg); opacity: 1; display: flex; justify-content: center; width: 100%;">
-                        <img src="../images/burger_assembly/tomato.png?v=1.0.4" alt="Juicy Tomato Slices" style="width: 230px; height: auto; filter: drop-shadow(0px 6px 12px rgba(0,0,0,0.12)); object-fit: contain;">
-                    </div>
-                    <!-- Layer 3: Melted Cheese -->
-                    <div class="burger-layer layer-cheese" style="transform: scale(0.7) translateY(-140px); opacity: 1; display: flex; justify-content: center; width: 100%;">
-                        <img src="../images/burger_assembly/cheese.png?v=1.0.4" alt="Melted Cheddar Cheese" style="width: 245px; height: auto; filter: drop-shadow(0px 6px 12px rgba(0,0,0,0.12)); object-fit: contain;">
-                    </div>
-                    <!-- Layer 4: Crispy Chicken Patty -->
-                    <div class="burger-layer layer-patty" style="transform: translateY(-50px) translateX(30px) rotate(15deg); opacity: 1; display: flex; justify-content: center; width: 100%;">
-                        <img src="../images/burger_assembly/chicken.png?v=1.0.4" alt="Golden Crispy Chicken Patty" style="width: 240px; height: auto; filter: drop-shadow(0px 8px 18px rgba(0,0,0,0.18)); object-fit: contain;">
-                    </div>
-                    <!-- Layer 5: Fresh Lettuce -->
-                    <div class="burger-layer layer-lettuce" style="transform: translateY(120px) translateX(-30px) rotate(-15deg); opacity: 1; display: flex; justify-content: center; width: 100%;">
-                        <img src="../images/burger_assembly/lettuce.png?v=1.0.4" alt="Fresh Crisp Lettuce" style="width: 255px; height: auto; filter: drop-shadow(0px 5px 10px rgba(0,0,0,0.1)); object-fit: contain;">
-                    </div>
-                    <!-- Layer 6: Bottom Bun -->
-                    <div class="burger-layer layer-bottom-bun" style="transform: translateY(260px); opacity: 1; display: flex; justify-content: center; width: 100%;">
-                        <img src="../images/burger_assembly/bottom_bun.png?v=1.0.4" alt="Bottom Bun" style="width: 250px; height: auto; filter: drop-shadow(0px 8px 15px rgba(0,0,0,0.15)); object-fit: contain;">
-                    </div>
+                    <img src="../images/burger_assembly/slider-01.png?v=1.0.8" alt="Hot & Crispy Chicken Combo" class="hero-image-floating" style="max-width: 330px; width: 100%; height: auto; filter: drop-shadow(0px 15px 30px rgba(0,0,0,0.3)); object-fit: contain;">
                 </div>
             </div>
         </section>
@@ -475,121 +479,6 @@
         }
 
         /**
-         * Scroll-Linked Burger Layers Assembly Calculations
-         */
-        let isBurgerIntroPlaying = true;
-
-        function playBurgerIntroAnimation() {
-            const topBun = document.querySelector('.layer-top-bun');
-            const tomato = document.querySelector('.layer-tomato');
-            const cheese = document.querySelector('.layer-cheese');
-            const patty = document.querySelector('.layer-patty');
-            const lettuce = document.querySelector('.layer-lettuce');
-            const bottomBun = document.querySelector('.layer-bottom-bun');
-            const glow = document.getElementById('burger-glow');
-            const steam = document.getElementById('burger-steam');
-
-            if (window.gsap) {
-                const tl = gsap.timeline({
-                    onComplete: () => {
-                        isBurgerIntroPlaying = false;
-                        handleBurgerScroll();
-                    }
-                });
-                tl.delay(0.6);
-                tl.to(bottomBun, { y: 0, duration: 1.2, ease: "elastic.out(1, 0.75)" }, 0)
-                  .to(lettuce, { y: 0, x: 0, rotation: 0, duration: 1.2, ease: "elastic.out(1, 0.75)" }, 0.1)
-                  .to(patty, { y: 0, x: 0, rotation: 0, duration: 1.2, ease: "elastic.out(1, 0.75)" }, 0.2)
-                  .to(cheese, { y: 0, scale: 1, duration: 1.2, ease: "elastic.out(1, 0.75)" }, 0.3)
-                  .to(tomato, { y: 0, x: 0, rotation: 0, duration: 1.2, ease: "elastic.out(1, 0.75)" }, 0.4)
-                  .to(topBun, { y: 0, duration: 1.2, ease: "elastic.out(1, 0.75)", onComplete: () => {
-                      if (glow) glow.classList.add('active');
-                      if (steam) steam.style.opacity = '1';
-                  }}, 0.5);
-            } else {
-                setTimeout(() => {
-                    const layers = [bottomBun, lettuce, patty, cheese, tomato, topBun];
-                    layers.forEach(layer => {
-                        if (layer) {
-                            layer.style.transition = 'transform 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
-                            if (layer === cheese) {
-                                layer.style.transform = 'scale(1) translateY(0)';
-                            } else {
-                                layer.style.transform = 'translateY(0) translateX(0) rotate(0)';
-                            }
-                        }
-                    });
-                    setTimeout(() => {
-                        isBurgerIntroPlaying = false;
-                        if (glow) glow.classList.add('active');
-                        if (steam) steam.style.opacity = '1';
-                    }, 1300);
-                }, 600);
-            }
-        }
-
-        function handleBurgerScroll() {
-            if (isBurgerIntroPlaying) return;
-
-            const topBun = document.querySelector('.layer-top-bun');
-            const tomato = document.querySelector('.layer-tomato');
-            const cheese = document.querySelector('.layer-cheese');
-            const patty = document.querySelector('.layer-patty');
-            const lettuce = document.querySelector('.layer-lettuce');
-            const bottomBun = document.querySelector('.layer-bottom-bun');
-            const glow = document.getElementById('burger-glow');
-            const steam = document.getElementById('burger-steam');
-
-            const scrollY = window.scrollY;
-            const maxScroll = 400; // Explodes over 400px of scrolling
-            let progress = 1 - (scrollY / maxScroll);
-            progress = Math.min(Math.max(progress, 0), 1); // Clamp between 0 and 1
-
-            if (progress >= 0.9) {
-                if (glow) glow.classList.add('active');
-                if (steam) steam.style.opacity = '1';
-            } else {
-                if (glow) glow.classList.remove('active');
-                if (steam) steam.style.opacity = '0';
-            }
-
-            const yTopBun = -380 * (1 - progress);
-            
-            const yTomato = -240 * (1 - progress);
-            const xTomato = -40 * (1 - progress);
-            const rotTomato = -20 * (1 - progress);
-            
-            const yCheese = -140 * (1 - progress);
-            const scaleCheese = 0.7 + 0.3 * progress;
-            
-            const yPatty = -50 * (1 - progress);
-            const xPatty = 30 * (1 - progress);
-            const rotPatty = 15 * (1 - progress);
-            
-            const yLettuce = 120 * (1 - progress);
-            const xLettuce = -30 * (1 - progress);
-            const rotLettuce = -15 * (1 - progress);
-            
-            const yBottomBun = 260 * (1 - progress);
-
-            if (window.gsap) {
-                gsap.to(topBun, { y: yTopBun, duration: 0.15, ease: "power1.out", overwrite: "auto" });
-                gsap.to(tomato, { y: yTomato, x: xTomato, rotation: rotTomato, duration: 0.15, ease: "power1.out", overwrite: "auto" });
-                gsap.to(cheese, { y: yCheese, scale: scaleCheese, duration: 0.15, ease: "power1.out", overwrite: "auto" });
-                gsap.to(patty, { y: yPatty, x: xPatty, rotation: rotPatty, duration: 0.15, ease: "power1.out", overwrite: "auto" });
-                gsap.to(lettuce, { y: yLettuce, x: xLettuce, rotation: rotLettuce, duration: 0.15, ease: "power1.out", overwrite: "auto" });
-                gsap.to(bottomBun, { y: yBottomBun, duration: 0.15, ease: "power1.out", overwrite: "auto" });
-            } else {
-                if (topBun) topBun.style.transform = `translateY(${yTopBun}px)`;
-                if (tomato) tomato.style.transform = `translateY(${yTomato}px) translateX(${xTomato}px) rotate(${rotTomato}deg)`;
-                if (cheese) cheese.style.transform = `scale(${scaleCheese}) translateY(${yCheese}px)`;
-                if (patty) patty.style.transform = `translateY(${yPatty}px) translateX(${xPatty}px) rotate(${rotPatty}deg)`;
-                if (lettuce) lettuce.style.transform = `translateY(${yLettuce}px) translateX(${xLettuce}px) rotate(${rotLettuce}deg)`;
-                if (bottomBun) bottomBun.style.transform = `translateY(${yBottomBun}px)`;
-            }
-        }
-
-        /**
          * Dynamic Storefront Catalogue Category Tabs Filtering
          */
         function initCategoryFilters() {
@@ -626,9 +515,11 @@
             await loadCategories();
             setTimeout(loadCatalogMenu, 800); // 800ms buffer for elegant loading skeleton preview
             
-            // Play intro animation, which will automatically enable scroll listener afterwards
-            playBurgerIntroAnimation();
-            window.addEventListener('scroll', handleBurgerScroll);
+            // Trigger CSS entrance animation for the hero image container
+            const heroContainer = document.querySelector('.burger-canvas-container');
+            if (heroContainer) {
+                heroContainer.style.opacity = '1';
+            }
 
             // Check if checkout URL parameter is present
             const urlParams = new URLSearchParams(window.location.search);
