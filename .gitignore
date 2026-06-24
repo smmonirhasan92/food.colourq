@@ -11,3 +11,8 @@ database/deploy_log.txt
 
 # Ignore scratch files
 scratch/
+
+# Ignore uploaded images but keep tracked assets
+images/*
+!images/payment_qr.png
+!images/burger_assembly/

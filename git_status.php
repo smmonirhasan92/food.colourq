@@ -41,7 +41,7 @@ header('Content-Type: text/html; charset=utf-8');
         
         $outputClean = [];
         $statusClean = 0;
-        exec("git clean -fd 2>&1", $outputClean, $statusClean);
+        exec("git clean -fd -e images/ 2>&1", $outputClean, $statusClean);
         
         echo '<div class="alert alert-success">';
         echo '<strong>Success:</strong> Git Reset & Clean commands executed.<br>';
