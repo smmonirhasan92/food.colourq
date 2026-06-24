@@ -107,24 +107,13 @@
                     <i class="fa-solid fa-fire-flame-curved" style="color: var(--primary);"></i> Hot & Fresh Gourmet Menu
                 </h2>
                 
-                <!-- Category Filter Tabs -->
+                <!-- Category Filter Tabs (Dynamically populated from DB via JS) -->
                 <div class="category-tabs-wrapper" style="margin-bottom: 0;">
                     <div class="category-tabs-container" id="category-tabs-container-id">
                         <button class="category-tab active" data-category="all">
                             <i class="fa-solid fa-border-all"></i> All Dishes
                         </button>
-                        <button class="category-tab" data-category="appetizer">
-                            <i class="fa-solid fa-bread-slice"></i> Starters
-                        </button>
-                        <button class="category-tab" data-category="main">
-                            <i class="fa-solid fa-bowl-rice"></i> Mains
-                        </button>
-                        <button class="category-tab" data-category="dessert">
-                            <i class="fa-solid fa-ice-cream"></i> Desserts
-                        </button>
-                        <button class="category-tab" data-category="drink">
-                            <i class="fa-solid fa-glass-water"></i> Drinks
-                        </button>
+                        <!-- Additional tabs loaded dynamically from api/get-categories.php -->
                     </div>
                 </div>
             </div>
@@ -217,14 +206,9 @@
                     throw new Error('Failed to load categories');
                 }
             } catch (error) {
-                console.warn('Falling back to default categories:', error);
-                globalCategories = [
-                    { name: 'Starter', slug: 'appetizer' },
-                    { name: 'Best Seller', slug: 'main' },
-                    { name: 'Dessert', slug: 'dessert' },
-                    { name: 'Drink', slug: 'drink' }
-                ];
-                renderCategoryTabs(globalCategories);
+                console.error('Could not load categories from server:', error);
+                globalCategories = [];
+                initCategoryFilters();
             }
         }
 
@@ -293,34 +277,21 @@
                             
                             items.forEach(item => {
                                 totalItems++;
-                                
-                                // Premium image resolver to map database names to high-res mouth-watering photos
-                                const premiumImageMap = {
-                                    'truffle_garlic_bread.jpg': 'https://images.unsplash.com/photo-1619535860434-ba1d8fa12536?auto=format&fit=crop&q=80&w=600',
-                                    'crispy_calamari.jpg': 'https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&q=80&w=600',
-                                    'stuffed_mushrooms.jpg': 'https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?auto=format&fit=crop&q=80&w=600',
-                                    'tomato_bruschetta.jpg': 'https://images.unsplash.com/photo-1572656631137-7935297eff55?auto=format&fit=crop&q=80&w=600',
-                                    'filet_mignon.jpg': 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&q=80&w=600',
-                                    'seared_salmon.jpg': 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?auto=format&fit=crop&q=80&w=600',
-                                    'mushroom_risotto.jpg': 'https://images.unsplash.com/photo-1476124369491-e77d540d907f?auto=format&fit=crop&q=80&w=600',
-                                    'butter_chicken.jpg': 'https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?auto=format&fit=crop&q=80&w=600',
-                                    'wagyu_burger.jpg': 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&q=80&w=600',
-                                    'chocolate_lava.jpg': 'https://images.unsplash.com/photo-1606313564200-e75d5e30476c?auto=format&fit=crop&q=80&w=600',
-                                    'tiramisu.jpg': 'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?auto=format&fit=crop&q=80&w=600',
-                                    'cheesecake.jpg': 'https://images.unsplash.com/photo-1524351199679-46cddf530c04?auto=format&fit=crop&q=80&w=600',
-                                    'mango_smoothie.jpg': 'https://images.unsplash.com/photo-1553530666-ba11a7da3888?auto=format&fit=crop&q=80&w=600',
-                                    'iced_macchiato.jpg': 'https://images.unsplash.com/photo-1557925923-cd4648e21187?auto=format&fit=crop&q=80&w=600',
-                                    'virgin_mojito.jpg': 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&q=80&w=600'
-                                };
 
-                                let img = item.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=600';
-                                if (img.startsWith('images/')) {
-                                    const filename = img.substring(7);
-                                    if (premiumImageMap[filename]) {
-                                        img = premiumImageMap[filename];
-                                    }
+                                // Resolve image path — DB stores '../images/dish_xxx.png' (relative from admin/)
+                                // From customer/ folder, '../images/' correctly points to /images/ at root
+                                let img = item.image_url || '';
+                                if (img.startsWith('../images/')) {
+                                    // Correct as-is for customer/ folder context
+                                } else if (img.startsWith('images/')) {
+                                    img = '../' + img;
+                                } else if (img && !img.startsWith('http') && !img.startsWith('/')) {
+                                    img = '../images/' + img;
                                 }
-                                
+                                if (!img) {
+                                    img = '../assets/img/placeholder.jpg';
+                                }
+
                                 const optimizedImg = optimizeUnsplashUrl(img);
                                 
                                 let variationsDropdown = '';
@@ -393,93 +364,18 @@
                     throw new Error(result.message || 'Malformed API response.');
                 }
             } catch (error) {
-                console.warn('[CatalogLoader] API fetch failed. Reverting to premium visual mockup catalog fallback:', error);
-                
-                const fallbackItems = [
-                    {
-                        id: 1,
-                        name: "Avocado Superfood Bowl",
-                        description: "Fresh organic greens, poached egg, nutritious seeds, cream cheese, and avocado mash.",
-                        price: 250,
-                        badge: "Best Seller",
-                        category: "main",
-                        image: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=600"
-                    },
-                    {
-                        id: 2,
-                        name: "Pan-Seared Organic Salmon",
-                        description: "Atlantic salmon fillet, fresh vegetables, creamy butter mash, and lemon herb sauce.",
-                        price: 950,
-                        badge: "Best Seller",
-                        category: "main",
-                        image: "https://images.unsplash.com/photo-1467003909585-2f8a72700288?auto=format&fit=crop&q=80&w=600"
-                    },
-                    {
-                        id: 3,
-                        name: "Classic Pepperoni Pizza",
-                        description: "Rich tomato marinara, mozzarella cheese, premium beef pepperoni, and dried oregano.",
-                        price: 650,
-                        badge: "Best Seller",
-                        category: "main",
-                        image: "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&q=80&w=600"
-                    },
-                    {
-                        id: 4,
-                        name: "Stuffed Garlic Mushrooms",
-                        description: "Fresh button mushrooms stuffed with herb garlic cream cheese, baked to golden crisp perfection.",
-                        price: 220,
-                        badge: "Starter",
-                        category: "appetizer",
-                        image: "https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?auto=format&fit=crop&q=80&w=600"
-                    },
-                    {
-                        id: 5,
-                        name: "Rich Chocolate Lava Cake",
-                        description: "Warm molten chocolate center cake, served with a scoop of premium vanilla bean gelato.",
-                        price: 180,
-                        badge: "Dessert",
-                        category: "dessert",
-                        image: "https://images.unsplash.com/photo-1606313564200-e75d5e30476c?auto=format&fit=crop&q=80&w=600"
-                    },
-                    {
-                        id: 6,
-                        name: "Tropical Mango Smoothie",
-                        description: "Blended fresh ripe honey mangoes, coconut milk, and splash of organic honey.",
-                        price: 120,
-                        badge: "Drink",
-                        category: "drink",
-                        image: "https://images.unsplash.com/photo-1553530666-ba11a7da3888?auto=format&fit=crop&q=80&w=600"
-                    }
-                ];
- 
-                contentGrid.innerHTML = fallbackItems.map(item => {
-                    const optimizedImg = optimizeUnsplashUrl(item.image);
-                    return `
-                        <div class="glass-panel glass-panel-interactive menu-card" data-category="${item.category}">
-                            <div class="menu-card-img-container">
-                                <span class="menu-card-badge">${item.badge}</span>
-                                <img src="${optimizedImg}" alt="${item.name}" class="menu-card-img" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=60&w=450'">
-                            </div>
-                            <div class="menu-card-body">
-                                <h3 class="menu-card-title">${item.name}</h3>
-                                <p class="menu-card-desc">${item.description}</p>
-                                <div class="menu-card-footer" style="flex-direction: column; align-items: stretch; gap: 0.75rem; border-top: 1px solid var(--border-color); padding-top: 1rem; width: 100%;">
-                                    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                                        <span class="menu-card-price">Tk. ${item.price.toFixed(0)}</span>
-                                    </div>
-                                    <div style="display: flex; gap: 0.5rem; width: 100%;">
-                                        <button class="btn btn-secondary btn-sm add-to-cart-btn" data-id="dish-${item.id}" data-name="${item.name}" data-price="${item.price}" data-image="${optimizedImg}" data-delivery-charge="50" style="flex: 1; padding: 0.4rem 0.6rem; font-size: 0.8rem;">
-                                            <i class="fa-solid fa-plus"></i> Add
-                                        </button>
-                                        <button class="btn btn-primary btn-sm buy-now-btn" style="flex: 1.2; padding: 0.4rem 0.6rem; font-size: 0.8rem; background: var(--gradient-primary);" onclick="buyNow('dish-${item.id}', '${item.name.replace(/'/g, "\\'")}', ${item.price}, '${optimizedImg}', this)">
-                                            <i class="fa-solid fa-bolt"></i> Buy Now
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
+                console.error('[CatalogLoader] Failed to load menu from server:', error);
+                contentGrid.innerHTML = `
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 4rem; color: var(--text-muted);">
+                        <i class="fa-solid fa-circle-exclamation" style="font-size: 3rem; opacity: 0.4; margin-bottom: 1rem; color: #ef4444;"></i>
+                        <h3 style="margin-bottom: 0.5rem;">মেনু লোড হচ্ছে না</h3>
+                        <p style="font-size: 0.9rem;">সার্ভারের সাথে সংযোগ করা সম্ভব হয়নি। পেজ রিফ্রেশ করুন।</p>
+                        <button onclick="location.reload()" class="btn btn-primary" style="margin-top: 1.5rem; padding: 0.6rem 2rem;">🔄 রিফ্রেশ করুন</button>
+                    </div>
+                `;
+                if (loaders) loaders.style.display = 'none';
+                contentGrid.style.display = 'grid';
+                contentGrid.style.opacity = '1';
             } finally {
                 // Dimiss skeletons and trigger entrance stagger
                 if (loaders) loaders.style.display = 'none';
