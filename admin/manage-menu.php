@@ -15,6 +15,16 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
     <link rel="stylesheet" href="../assets/css/responsive.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js" defer></script>
+    <style>
+    .admin-menu-grid {
+        grid-template-columns: 1.1fr 2fr;
+    }
+    @media (max-width: 1024px) {
+        .admin-menu-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+    </style>
 </head>
 <body>
 
@@ -84,8 +94,7 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                 </div>
             </div>
 
-            <!-- Two Columns layout (Menu Creation Form & Menu Grid) -->
-            <div class="grid grid-cols-2" style="grid-template-columns: 1fr 2fr; align-items: start; gap: 2rem;">
+            <div class="grid admin-menu-grid" style="align-items: start; gap: 2rem;">
                 
                 <!-- Add New Item Form -->
                 <section class="glass-panel" style="padding: 2rem; position: sticky; top: 2rem; background-color: var(--bg-dark-surface); border: 1px solid var(--border-color);">
@@ -104,7 +113,7 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                             <input class="form-input" type="text" id="dish-name" required placeholder="e.g. Herb Crusted Ribeye">
                         </div>
 
-                        <div class="grid grid-cols-4" style="grid-template-columns: 1fr 1fr 1fr 1fr; gap: 1rem;">
+                        <div class="grid grid-cols-2" style="grid-template-columns: 1fr 1fr; gap: 1rem;">
                             <div class="form-group">
                                 <label class="form-label" for="dish-price">Price (Tk.)</label>
                                 <input class="form-input" type="number" id="dish-price" step="1" required placeholder="e.g. 450">
@@ -830,7 +839,7 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                     <input class="form-input" type="text" id="edit-dish-name" required placeholder="e.g. Herb Crusted Ribeye" style="background-color: rgba(15, 23, 42, 0.5); border: 1px solid rgba(255, 255, 255, 0.08); color: white;">
                 </div>
 
-                <div class="grid grid-cols-4" style="grid-template-columns: 1fr 1fr 1fr 1fr; gap: 1rem;">
+                <div class="grid grid-cols-2" style="grid-template-columns: 1fr 1fr; gap: 1rem;">
                     <div class="form-group">
                         <label class="form-label" for="edit-dish-price">Price (Tk.)</label>
                         <input class="form-input" type="number" id="edit-dish-price" step="1" required placeholder="e.g. 450" style="background-color: rgba(15, 23, 42, 0.5); border: 1px solid rgba(255, 255, 255, 0.08); color: white;">
