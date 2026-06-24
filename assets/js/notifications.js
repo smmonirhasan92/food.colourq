@@ -52,6 +52,9 @@ class WebAudioSynthesizer {
                 case 'error':
                     this.synthesizeErrorAlert(now);
                     break;
+                case 'new-order':
+                    this.synthesizeNewOrderAlarm(now);
+                    break;
                 case 'info':
                 default:
                     this.synthesizeModernChime(now);
@@ -66,29 +69,38 @@ class WebAudioSynthesizer {
      * Elegant high-frequency crystal bell chime.
      */
     synthesizeModernChime(startTime) {
-        // Fundamental tone
-        this.createOscillator(880, 'sine', 0.15, startTime, 0.6); // A5
-        // Subtle harmonic overtone (an octave above)
-        this.createOscillator(1760, 'sine', 0.05, startTime, 0.4); // A6
+        this.createOscillator(880, 'sine', 0.4, startTime, 0.6); // A5
+        this.createOscillator(1760, 'sine', 0.15, startTime, 0.4); // A6
     }
 
     /**
      * Upward bright, happy two-note melodic chime.
      */
     synthesizeSuccessMelody(startTime) {
-        // First note (E5)
-        this.createOscillator(659.25, 'sine', 0.12, startTime, 0.3);
-        // Second note (B5) starting shortly after
-        this.createOscillator(987.77, 'sine', 0.15, startTime + 0.12, 0.5);
+        this.createOscillator(659.25, 'sine', 0.45, startTime, 0.3);
+        this.createOscillator(987.77, 'sine', 0.5, startTime + 0.12, 0.5);
     }
 
     /**
      * Double cautionary tone.
      */
     synthesizeWarningBeeps(startTime) {
-        // Double pulse at caution pitch (D5)
-        this.createOscillator(587.33, 'triangle', 0.15, startTime, 0.15);
-        this.createOscillator(587.33, 'triangle', 0.15, startTime + 0.22, 0.15);
+        this.createOscillator(587.33, 'triangle', 0.45, startTime, 0.15);
+        this.createOscillator(587.33, 'triangle', 0.45, startTime + 0.22, 0.15);
+    }
+
+    /**
+     * LOUD NEW ORDER ALARM - Triple urgent beep pattern (restaurant-grade).
+     * Uses high-gain square + sawtooth mix for maximum audibility.
+     */
+    synthesizeNewOrderAlarm(startTime) {
+        const beepDuration = 0.18;
+        const beepGap = 0.28;
+        for (let i = 0; i < 3; i++) {
+            const t = startTime + (i * beepGap);
+            this.createOscillator(880, 'square', 0.8, t, beepDuration);
+            this.createOscillator(1100, 'sawtooth', 0.5, t + 0.02, beepDuration - 0.02);
+        }
     }
 
     /**
@@ -103,8 +115,7 @@ class WebAudioSynthesizer {
         osc.frequency.setValueAtTime(320, startTime);
         osc.frequency.exponentialRampToValueAtTime(180, startTime + 0.45);
 
-        // Harsher sound requires lower gain limit
-        gain.gain.setValueAtTime(0.08, startTime);
+        gain.gain.setValueAtTime(0.55, startTime);
         gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.45);
 
         osc.connect(gain);

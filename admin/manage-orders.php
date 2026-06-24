@@ -927,14 +927,14 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
             
             // Play immediately
             if (window.NotificationSystem && window.NotificationSystem.synth) {
-                window.NotificationSystem.synth.playChime('warning');
+                window.NotificationSystem.synth.playChime('new-order');
             }
             
             alarmInterval = setInterval(() => {
                 const soundToggle = document.getElementById('sound-alert-toggle');
                 const soundEnabled = soundToggle ? soundToggle.checked : true;
                 if (soundEnabled && window.NotificationSystem && window.NotificationSystem.synth) {
-                    window.NotificationSystem.synth.playChime('warning');
+                    window.NotificationSystem.synth.playChime('new-order');
                 }
             }, 2500);
         }
