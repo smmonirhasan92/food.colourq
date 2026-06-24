@@ -36,7 +36,7 @@ try {
     
     // Fetch order items
     $itemsStmt = $db->prepare("
-        SELECT oi.price, oi.quantity, m.name as item_name
+        SELECT oi.price, oi.quantity, oi.variation_name, m.name as item_name
         FROM order_items oi
         JOIN menu_items m ON oi.menu_item_id = m.id
         WHERE oi.order_id = ?
@@ -175,7 +175,7 @@ try {
                 $grossTotal += $sub;
             ?>
                 <tr>
-                    <td><?php echo htmlspecialchars($item['item_name']); ?></td>
+                    <td><?php echo htmlspecialchars($item['item_name']); ?><?php if (!empty($item['variation_name'])) { echo ' (' . htmlspecialchars($item['variation_name']) . ')'; } ?></td>
                     <td class="text-center"><?php echo $item['quantity']; ?></td>
                     <td class="text-right">Tk. <?php echo number_format($sub, 0); ?></td>
                 </tr>

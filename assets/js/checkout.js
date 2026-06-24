@@ -10,7 +10,7 @@ class ShoppingCartManager {
     constructor() {
         this.storageKey = 'food_coloured_cart';
         this.items = this.loadCart();
-        this.deliveryFee = 60; // 60 Taka standard delivery fee in BD
+        this.standardDeliveryFee = 50; // 50 Taka standard delivery fee
         this.taxRate = 0.05; // 5% VAT in BD restaurant bill
         this.loyaltyDiscountPercent = 0; // Dynamic loyalty discount percent!
         this.init();
@@ -59,28 +59,45 @@ class ShoppingCartManager {
      * Binds general event delegation to capture add-to-cart clicks.
      */
     bindEvents() {
-        // Event delegation for storefront "Add to Cart" buttons
         document.addEventListener('click', (e) => {
             const addBtn = e.target.closest('.add-to-cart-btn');
             if (addBtn) {
                 e.preventDefault();
+                const card = addBtn.closest('.menu-card');
+                const select = card ? card.querySelector('.customer-var-select') : null;
+                
+                let id = addBtn.dataset.id;
+                let name = addBtn.dataset.name;
+                let price = parseFloat(addBtn.dataset.price);
+                let variationId = null;
+                let variationName = null;
+                const deliveryCharge = addBtn.dataset.deliveryCharge !== undefined ? parseInt(addBtn.dataset.deliveryCharge) : 50;
+
+                if (select) {
+                    const selectedOpt = select.options[select.selectedIndex];
+                    variationId = parseInt(select.value);
+                    variationName = selectedOpt.text.split(' (Tk.')[0];
+                    price = parseFloat(selectedOpt.dataset.price);
+                    id = `${id}-${variationId}`;
+                }
+
                 const itemData = {
-                    id: addBtn.dataset.id,
-                    name: addBtn.dataset.name,
-                    price: parseFloat(addBtn.dataset.price),
+                    id: id,
+                    name: name,
+                    price: price,
                     image: addBtn.dataset.image || 'assets/img/placeholder.jpg',
-                    quantity: 1
+                    quantity: 1,
+                    variation_id: variationId,
+                    variation_name: variationName,
+                    delivery_charge: isNaN(deliveryCharge) ? 50 : deliveryCharge
                 };
                 
                 this.addItem(itemData);
                 
-                // Audio & visual micro-interaction responses
                 if (window.NotificationSystem) {
                     window.NotificationSystem.toast('success', 'Added to Cart', `${itemData.name} has been added to your bag.`);
                 }
 
-                // Get the image element of the card to trigger the fly to cart animation
-                const card = addBtn.closest('.menu-card');
                 const imgEl = card ? card.querySelector('.menu-card-img') : null;
 
                 if (imgEl && window.AnimationEngine && window.AnimationEngine.animateFlyToCart) {
@@ -153,14 +170,20 @@ class ShoppingCartManager {
     getTotals() {
         const subtotal = this.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
         const tax = subtotal * this.taxRate;
-        const gross = subtotal > 0 ? (subtotal + tax + this.deliveryFee) : 0;
+        // Dynamic delivery fee: 50 if any cart item requires delivery charge, else 0
+        const hasDeliveryCharge = this.items.some(item => {
+            const dc = item.delivery_charge;
+            return dc === undefined || dc === null ? true : parseInt(dc) > 0;
+        });
+        const deliveryFee = (subtotal > 0 && hasDeliveryCharge) ? this.standardDeliveryFee : 0;
+        const gross = subtotal > 0 ? (subtotal + tax + deliveryFee) : 0;
         const discountAmount = gross * (this.loyaltyDiscountPercent / 100);
         const total = gross - discountAmount;
 
         return {
             subtotal: subtotal.toFixed(0),
             tax: tax.toFixed(0),
-            deliveryFee: subtotal > 0 ? this.deliveryFee.toFixed(0) : '0',
+            deliveryFee: deliveryFee.toFixed(0),
             discountPercent: this.loyaltyDiscountPercent,
             discountAmount: discountAmount.toFixed(0),
             total: total.toFixed(0)
@@ -202,7 +225,7 @@ class ShoppingCartManager {
                 <img src="${item.image}" alt="${item.name}" class="cart-item-img">
                 <div class="cart-item-details">
                     <div>
-                        <div class="cart-item-title">${item.name}</div>
+                        <div class="cart-item-title">${item.name}${item.variation_name ? ` (${item.variation_name})` : ''}</div>
                         <div class="cart-item-price">Tk. ${(item.price * item.quantity).toFixed(0)}</div>
                     </div>
                     <div class="cart-item-qty">
@@ -279,7 +302,6 @@ function initCheckoutPageValidation() {
             return;
         }
 
-        // Secure basic check pass
         const required = checkoutForm.querySelectorAll('[required]');
         let isValid = true;
         
@@ -298,7 +320,6 @@ function initCheckoutPageValidation() {
             return;
         }
 
-        // Visual loading state on submission button
         const submitBtn = checkoutForm.querySelector('button[type="submit"]');
         const originalBtnHtml = submitBtn ? submitBtn.innerHTML : 'Authorize & Place Order';
         if (submitBtn) {
@@ -306,16 +327,15 @@ function initCheckoutPageValidation() {
             submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Securing Culinary Order...`;
         }
 
-        // Gather checkout parameters
         const formData = new FormData(checkoutForm);
         
-        // Map cart items for API payload format
         const cartItems = window.CartSystem.items.map(item => {
-            const cleanId = typeof item.id === 'string' && item.id.includes('-') 
-                ? parseInt(item.id.split('-')[1], 10) 
-                : parseInt(item.id, 10);
+            const parts = typeof item.id === 'string' ? item.id.split('-') : [];
+            const cleanId = parts.length > 1 ? parseInt(parts[1], 10) : parseInt(item.id, 10);
+            const varId = item.variation_id ? parseInt(item.variation_id, 10) : null;
             return {
                 menu_item_id: isNaN(cleanId) ? item.id : cleanId,
+                variation_id: varId,
                 quantity: item.quantity,
                 price: item.price
             };
@@ -340,6 +360,7 @@ function initCheckoutPageValidation() {
             discount_amount: parseFloat(totals.discountAmount) || 0,
             items: cartItems.map(item => ({
                 menu_item_id: item.menu_item_id,
+                variation_id: item.variation_id,
                 quantity: item.quantity
             }))
         };

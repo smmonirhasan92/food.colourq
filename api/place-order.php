@@ -125,7 +125,7 @@ try {
         }
         
         // Verify menu item availability and cost
-        $menuStmt = $db->prepare("SELECT id, name, price, discount_price, is_available FROM menu_items WHERE id = ? LIMIT 1");
+        $menuStmt = $db->prepare("SELECT id, name, price, discount_price, delivery_charge, is_available FROM menu_items WHERE id = ? LIMIT 1");
         $menuStmt->execute([$itemId]);
         $menuItem = $menuStmt->fetch();
         
@@ -137,14 +137,29 @@ try {
             sendJsonResponse(false, "Menu item '{$menuItem['name']}' is currently not available.", null, 400);
         }
         
-        $price = $menuItem['discount_price'] !== null && (float)$menuItem['discount_price'] > 0 ? (float)$menuItem['discount_price'] : (float)$menuItem['price'];
+        // Check for variation choice
+        $variationId = isset($item['variation_id']) ? (int)$item['variation_id'] : (isset($item['variationId']) ? (int)$item['variationId'] : null);
+        $variation = null;
+        if ($variationId !== null) {
+            $varStmt = $db->prepare("SELECT id, name, price FROM menu_item_variations WHERE id = ? AND menu_item_id = ? LIMIT 1");
+            $varStmt->execute([$variationId, $itemId]);
+            $variation = $varStmt->fetch();
+            if (!$variation) {
+                sendJsonResponse(false, "Invalid variation ID {$variationId} for menu item {$itemId}.", null, 400);
+            }
+        }
+
+        $price = ($variation !== null) ? (float)$variation['price'] : ($menuItem['discount_price'] !== null && (float)$menuItem['discount_price'] > 0 ? (float)$menuItem['discount_price'] : (float)$menuItem['price']);
         $subtotal = $price * $qty;
         $totalPrice += $subtotal;
         
         $validatedItems[] = [
             'id' => $itemId,
             'price' => $price,
-            'quantity' => $qty
+            'quantity' => $qty,
+            'variation_id' => $variationId,
+            'variation_name' => $variation ? $variation['name'] : null,
+            'delivery_charge' => isset($menuItem['delivery_charge']) ? (int)$menuItem['delivery_charge'] : 50
         ];
     }
     
@@ -167,7 +182,14 @@ try {
     
     // Calculate tax, delivery, and discount
     $tax = $totalPrice * 0.05; // 5% tax
-    $deliveryFee = 60.00;
+    // Dynamic delivery fee: 50 if any item requires delivery charge, else 0
+    $deliveryFee = 0.00;
+    foreach ($validatedItems as $vItem) {
+        if (isset($vItem['delivery_charge']) && (int)$vItem['delivery_charge'] > 0) {
+            $deliveryFee = 50.00;
+            break;
+        }
+    }
     $grossTotal = $totalPrice + $tax + $deliveryFee;
     
     // Check repeat customer loyalty status (has completed/pending/preparing orders)
@@ -205,11 +227,18 @@ try {
     
     // 2. Insert into order_items table
     $insertItem = $db->prepare("
-        INSERT INTO order_items (order_id, menu_item_id, quantity, price) 
-        VALUES (?, ?, ?, ?)
+        INSERT INTO order_items (order_id, menu_item_id, variation_id, variation_name, quantity, price) 
+        VALUES (?, ?, ?, ?, ?, ?)
     ");
     foreach ($validatedItems as $vItem) {
-        $insertItem->execute([$orderId, $vItem['id'], $vItem['quantity'], $vItem['price']]);
+        $insertItem->execute([
+            $orderId, 
+            $vItem['id'], 
+            $vItem['variation_id'], 
+            $vItem['variation_name'], 
+            $vItem['quantity'], 
+            $vItem['price']
+        ]);
     }
     
     // 3. Log an admin notification record into notifications_log

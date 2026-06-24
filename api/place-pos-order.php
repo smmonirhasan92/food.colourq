@@ -138,12 +138,28 @@ try {
         }
         
         $price = $menuItem['discount_price'] !== null && (float)$menuItem['discount_price'] > 0 ? (float)$menuItem['discount_price'] : (float)$menuItem['price'];
+        
+        // Check for variation choice
+        $variationId = isset($item['variation_id']) ? (int)$item['variation_id'] : (isset($item['variationId']) ? (int)$item['variationId'] : null);
+        $variation = null;
+        if ($variationId !== null) {
+            $varStmt = $db->prepare("SELECT id, name, price FROM menu_item_variations WHERE id = ? AND menu_item_id = ? LIMIT 1");
+            $varStmt->execute([$variationId, $itemId]);
+            $variation = $varStmt->fetch();
+            if (!$variation) {
+                sendJsonResponse(false, "Invalid variation ID {$variationId} for menu item {$itemId}.", null, 400);
+            }
+            $price = (float)$variation['price'];
+        }
+
         $grossTotal += ($price * $qty);
         
         $validatedItems[] = [
             'id' => $itemId,
             'price' => $price,
-            'quantity' => $qty
+            'quantity' => $qty,
+            'variation_id' => $variationId,
+            'variation_name' => $variation ? $variation['name'] : null
         ];
     }
     
@@ -187,11 +203,18 @@ try {
     
     // 5. Insert into order_items table
     $insertItem = $db->prepare("
-        INSERT INTO order_items (order_id, menu_item_id, quantity, price) 
-        VALUES (?, ?, ?, ?)
+        INSERT INTO order_items (order_id, menu_item_id, variation_id, variation_name, quantity, price) 
+        VALUES (?, ?, ?, ?, ?, ?)
     ");
     foreach ($validatedItems as $vItem) {
-        $insertItem->execute([$orderId, $vItem['id'], $vItem['quantity'], $vItem['price']]);
+        $insertItem->execute([
+            $orderId, 
+            $vItem['id'], 
+            $vItem['variation_id'], 
+            $vItem['variation_name'], 
+            $vItem['quantity'], 
+            $vItem['price']
+        ]);
     }
     
     // Commit transaction

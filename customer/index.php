@@ -323,11 +323,23 @@
                                 
                                 const optimizedImg = optimizeUnsplashUrl(img);
                                 
+                                let variationsDropdown = '';
+                                if (item.variations && item.variations.length > 0) {
+                                    variationsDropdown = `
+                                        <select class="form-input form-select customer-var-select" style="font-size: 0.8rem; padding: 0.35rem 0.6rem; margin-top: 0.5rem; margin-bottom: 0.5rem; height: auto; background: var(--bg-dark-surface); color: var(--text-primary); border: 1px solid var(--border-color); width: 100%; border-radius: var(--radius-sm);" onchange="updateStorefrontCardPrice(this)">
+                                            ${item.variations.map(v => `<option value="${v.id}" data-price="${v.price}">${v.name} (Tk. ${parseFloat(v.price).toFixed(0)})</option>`).join('')}
+                                        </select>
+                                    `;
+                                }
+
                                 const hasDiscount = item.discount_price !== null && item.discount_price > 0;
-                                const activePrice = hasDiscount ? item.discount_price : item.price;
-                                const priceHtml = hasDiscount ? 
-                                    `Tk. ${item.discount_price.toFixed(0)} <del style="font-size: 0.85rem; color: var(--text-muted); margin-left: 0.5rem;">Tk. ${item.price.toFixed(0)}</del>` : 
-                                    `Tk. ${item.price.toFixed(0)}`;
+                                const hasVariations = item.variations && item.variations.length > 0;
+                                const activePrice = hasVariations ? parseFloat(item.variations[0].price) : (hasDiscount ? item.discount_price : item.price);
+                                const priceHtml = hasVariations ? 
+                                    `Tk. ${activePrice.toFixed(0)}` :
+                                    (hasDiscount ? 
+                                        `Tk. ${item.discount_price.toFixed(0)} <del style="font-size: 0.85rem; color: var(--text-muted); margin-left: 0.5rem;">Tk. ${item.price.toFixed(0)}</del>` : 
+                                        `Tk. ${item.price.toFixed(0)}`);
 
                                 htmlContent += `
                                     <div class="glass-panel glass-panel-interactive menu-card" data-category="${categoryKey}">
@@ -338,6 +350,7 @@
                                         <div class="menu-card-body">
                                             <h3 class="menu-card-title">${item.name}</h3>
                                             <p class="menu-card-desc">${item.description}</p>
+                                            ${variationsDropdown}
                                             <div class="menu-card-footer" style="flex-direction: column; align-items: stretch; gap: 0.75rem; border-top: 1px solid var(--border-color); padding-top: 1rem; width: 100%;">
                                                 <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
                                                     <span class="menu-card-price">${priceHtml}</span>
@@ -348,12 +361,13 @@
                                                             data-name="${item.name}" 
                                                             data-price="${activePrice}" 
                                                             data-image="${optimizedImg}"
+                                                            data-delivery-charge="${item.delivery_charge !== undefined ? item.delivery_charge : 50}"
                                                             style="flex: 1; padding: 0.4rem 0.6rem; font-size: 0.8rem;">
                                                         <i class="fa-solid fa-plus"></i> Add
                                                     </button>
                                                     <button class="btn btn-primary btn-sm buy-now-btn" 
                                                             style="flex: 1.2; padding: 0.4rem 0.6rem; font-size: 0.8rem; background: var(--gradient-primary);"
-                                                            onclick="buyNow('dish-${item.id}', '${item.name.replace(/'/g, "\\'")}', ${activePrice}, '${optimizedImg}')">
+                                                            onclick="buyNow('dish-${item.id}', '${item.name.replace(/'/g, "\\'")}', ${activePrice}, '${optimizedImg}', this)">
                                                         <i class="fa-solid fa-bolt"></i> Buy Now
                                                     </button>
                                                 </div>
@@ -454,10 +468,10 @@
                                         <span class="menu-card-price">Tk. ${item.price.toFixed(0)}</span>
                                     </div>
                                     <div style="display: flex; gap: 0.5rem; width: 100%;">
-                                        <button class="btn btn-secondary btn-sm add-to-cart-btn" data-id="dish-${item.id}" data-name="${item.name}" data-price="${item.price}" data-image="${optimizedImg}" style="flex: 1; padding: 0.4rem 0.6rem; font-size: 0.8rem;">
+                                        <button class="btn btn-secondary btn-sm add-to-cart-btn" data-id="dish-${item.id}" data-name="${item.name}" data-price="${item.price}" data-image="${optimizedImg}" data-delivery-charge="50" style="flex: 1; padding: 0.4rem 0.6rem; font-size: 0.8rem;">
                                             <i class="fa-solid fa-plus"></i> Add
                                         </button>
-                                        <button class="btn btn-primary btn-sm buy-now-btn" style="flex: 1.2; padding: 0.4rem 0.6rem; font-size: 0.8rem; background: var(--gradient-primary);" onclick="buyNow('dish-${item.id}', '${item.name.replace(/'/g, "\\'")}', ${item.price}, '${optimizedImg}')">
+                                        <button class="btn btn-primary btn-sm buy-now-btn" style="flex: 1.2; padding: 0.4rem 0.6rem; font-size: 0.8rem; background: var(--gradient-primary);" onclick="buyNow('dish-${item.id}', '${item.name.replace(/'/g, "\\'")}', ${item.price}, '${optimizedImg}', this)">
                                             <i class="fa-solid fa-bolt"></i> Buy Now
                                         </button>
                                     </div>
@@ -475,6 +489,17 @@
                 if (window.AnimationEngine) {
                     window.AnimationEngine.cascadeEntrance('.menu-card');
                 }
+            }
+        }
+
+        function updateStorefrontCardPrice(select) {
+            const card = select.closest('.menu-card');
+            if (!card) return;
+            const priceEl = card.querySelector('.menu-card-price');
+            const selectedOpt = select.options[select.selectedIndex];
+            const price = parseFloat(selectedOpt.dataset.price);
+            if (priceEl && !isNaN(price)) {
+                priceEl.textContent = `Tk. ${price.toFixed(0)}`;
             }
         }
 
@@ -531,22 +556,39 @@
         /**
          * Quick Buy Flow: clears cart, adds item, and triggers checkout modal
          */
-        function buyNow(id, name, price, image) {
+        function buyNow(id, name, price, image, btn) {
             if (window.CartSystem) {
-                // Clear cart to ensure only this item is ordered
                 window.CartSystem.clearCart();
                 
-                // Add item
+                let finalId = id;
+                let finalPrice = price;
+                let variationId = null;
+                let variationName = null;
+                
+                const card = btn ? btn.closest('.menu-card') : null;
+                const select = card ? card.querySelector('.customer-var-select') : null;
+                if (select) {
+                    const selectedOpt = select.options[select.selectedIndex];
+                    variationId = parseInt(select.value);
+                    variationName = selectedOpt.text.split(' (Tk.')[0];
+                    finalPrice = parseFloat(selectedOpt.dataset.price);
+                    finalId = `${id}-${variationId}`;
+                }
+                
+                const addBtn = card ? card.querySelector('.add-to-cart-btn') : null;
+                const deliveryCharge = addBtn ? parseInt(addBtn.dataset.deliveryCharge) : 50;
+
                 const itemData = {
-                    id: id,
+                    id: finalId,
                     name: name,
-                    price: parseFloat(price),
+                    price: parseFloat(finalPrice),
                     image: image || 'assets/img/placeholder.jpg',
-                    quantity: 1
+                    quantity: 1,
+                    variation_id: variationId,
+                    variation_name: variationName,
+                    delivery_charge: isNaN(deliveryCharge) ? 50 : deliveryCharge
                 };
                 window.CartSystem.addItem(itemData);
-                
-                // Open modal
                 openCheckoutModal();
             }
         }
@@ -614,7 +656,7 @@
                     <div style="display: flex; align-items: center; gap: 0.75rem;">
                         <img src="${item.image}" alt="${item.name}" style="width: 50px; height: 50px; border-radius: var(--radius-md); object-fit: cover; border: 1px solid rgba(255,255,255,0.08);">
                         <div>
-                            <div style="font-weight: 700; font-size: 0.9rem; color: var(--text-primary); max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${item.name}</div>
+                            <div style="font-weight: 700; font-size: 0.9rem; color: var(--text-primary); max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${item.name}${item.variation_name ? ` (${item.variation_name})` : ''}</div>
                             <div style="font-size: 0.75rem; color: var(--primary); font-weight: 600; margin-top: 0.15rem;">Tk. ${item.price.toFixed(0)} each</div>
                         </div>
                     </div>

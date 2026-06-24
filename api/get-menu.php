@@ -19,7 +19,7 @@ try {
     $db = Database::getConnection();
     
     // Fetch active non-deleted items sorted by category and name
-    $query = "SELECT id, name, description, price, discount_price, category, image_url 
+    $query = "SELECT id, name, description, price, discount_price, delivery_charge, category, image_url 
               FROM menu_items 
               WHERE is_available = 1 AND is_deleted = 0
               ORDER BY category ASC, name ASC";
@@ -56,6 +56,24 @@ try {
         ];
     }
 
+    // Fetch all active variations
+    $variationsQuery = "SELECT id, menu_item_id, name, price FROM menu_item_variations WHERE is_available = 1 ORDER BY id ASC";
+    $varsStmt = $db->query($variationsQuery);
+    $variationsList = $varsStmt->fetchAll();
+    
+    $variationsMap = [];
+    foreach ($variationsList as $var) {
+        $itemId = (int)$var['menu_item_id'];
+        if (!isset($variationsMap[$itemId])) {
+            $variationsMap[$itemId] = [];
+        }
+        $variationsMap[$itemId][] = [
+            'id' => (int)$var['id'],
+            'name' => $var['name'],
+            'price' => (float)$var['price']
+        ];
+    }
+
     foreach ($items as $item) {
         $category = trim($item['category']);
         
@@ -67,13 +85,18 @@ try {
             $categorized[$targetCategory] = [];
         }
         
+        $itemId = (int)$item['id'];
+        $itemVars = isset($variationsMap[$itemId]) ? $variationsMap[$itemId] : [];
+
         $categorized[$targetCategory][] = [
-            'id' => (int)$item['id'],
+            'id' => $itemId,
             'name' => $item['name'],
             'description' => $item['description'],
             'price' => (float)$item['price'],
             'discount_price' => $item['discount_price'] !== null ? (float)$item['discount_price'] : null,
-            'image_url' => $item['image_url']
+            'delivery_charge' => isset($item['delivery_charge']) ? (int)$item['delivery_charge'] : 50,
+            'image_url' => $item['image_url'],
+            'variations' => $itemVars
         ];
     }
 

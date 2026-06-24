@@ -519,7 +519,7 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                 
                 let itemsHtml = '';
                 if (Array.isArray(order.items)) {
-                    itemsHtml = order.items.map(item => `<div>${item.quantity}x ${item.item_name || item.name || 'Gourmet Selection'}</div>`).join('');
+                    itemsHtml = order.items.map(item => `<div>${item.quantity}x ${item.item_name || item.name || 'Gourmet Selection'}${item.variation_name ? ` (${item.variation_name})` : ''}</div>`).join('');
                 } else if (order.items_summary) {
                     itemsHtml = `<div style="font-size: 0.9rem;">${order.items_summary}</div>`;
                 } else {
@@ -705,7 +705,7 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
             }
 
             tbody.innerHTML = disputesList.map(order => {
-                let itemsHtml = order.items.map(item => `<div>${item.quantity}x ${item.item_name}</div>`).join('');
+                let itemsHtml = order.items.map(item => `<div>${item.quantity}x ${item.item_name}${item.variation_name ? ` (${item.variation_name})` : ''}</div>`).join('');
                 
                 let statusBadge = '';
                 if (order.dispute_status === 'pending') {

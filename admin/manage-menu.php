@@ -135,6 +135,13 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                                     <option value="drink">Drink</option>
                                 </select>
                             </div>
+                            <div class="form-group" style="grid-column: 1 / -1;">
+                                <label class="form-label" for="dish-delivery-charge">Delivery Charge</label>
+                                <select class="form-input form-select" id="dish-delivery-charge">
+                                    <option value="50" selected>Standard - Tk. 50</option>
+                                    <option value="0">Free Delivery - Tk. 0</option>
+                                </select>
+                            </div>
                         </div>
 
                         <div class="form-group">
@@ -156,6 +163,18 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                                 <div id="image-preview-container" style="display: none; width: 48px; height: 48px; border-radius: var(--radius-sm); overflow: hidden; border: 1px solid var(--border-color); box-shadow: var(--shadow-sm);">
                                     <img id="image-preview" src="" style="width: 100%; height: 100%; object-fit: cover;">
                                 </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 1.5rem;">
+                            <label class="form-label" style="display: flex; justify-content: space-between; align-items: center;">
+                                <span>Product Variations</span>
+                                <button type="button" class="btn btn-glass btn-sm" onclick="addVariationRow('add')" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; border-color: rgba(234, 103, 33, 0.3); color: var(--primary); width: auto;">
+                                    <i class="fa-solid fa-plus"></i> Add Variation
+                                </button>
+                            </label>
+                            <div id="add-variations-container" style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem;">
+                                <!-- Dynamic variation rows will be added here -->
                             </div>
                         </div>
 
@@ -295,12 +314,31 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                         <div class="menu-card-body" style="gap: 0.5rem; padding: 1.25rem;">
                             <h4 class="menu-card-title" style="font-size: 1.1rem; color: var(--text-primary);">${item.name}</h4>
                             <p class="menu-card-desc" style="font-size: 0.8rem; color: var(--text-muted);">${item.description}</p>
+                            
+                            ${item.variations && item.variations.length > 0 ? `
+                                <div class="menu-card-variations" style="display: flex; flex-direction: column; gap: 0.25rem; margin: 0.25rem 0 0.5rem 0; font-size: 0.75rem; background: rgba(255,255,255,0.02); padding: 0.5rem; border-radius: var(--radius-sm); border: 1px solid rgba(255,255,255,0.05);">
+                                    <span style="font-weight: 600; color: var(--text-secondary); text-transform: uppercase; font-size: 0.65rem; letter-spacing: 0.05em;">Variations:</span>
+                                    ${item.variations.map(v => `
+                                        <div style="display: flex; justify-content: space-between; color: var(--text-muted); padding: 0.1rem 0;">
+                                            <span>• ${v.name}</span>
+                                            <span style="font-weight: 500; color: var(--text-primary);">Tk. ${parseFloat(v.price).toFixed(0)}</span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            ` : ''}
+
                             <div class="menu-card-footer" style="padding-top: 0.75rem; border-top: 1px solid var(--border-color);">
-                                <span class="menu-card-price" style="font-size: 1.15rem; color: var(--primary);">
-                                    ${item.discount_price && item.discount_price > 0 ? 
-                                        `Tk. ${item.discount_price.toFixed(0)} <del style="font-size: 0.8rem; color: var(--text-muted); margin-left: 0.35rem;">Tk. ${item.price.toFixed(0)}</del>` : 
-                                        `Tk. ${item.price.toFixed(0)}`}
-                                </span>
+                                <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                    <span class="menu-card-price" style="font-size: 1.15rem; color: var(--primary);">
+                                        ${item.discount_price && item.discount_price > 0 ? 
+                                            `Tk. ${item.discount_price.toFixed(0)} <del style="font-size: 0.8rem; color: var(--text-muted); margin-left: 0.35rem;">Tk. ${item.price.toFixed(0)}</del>` : 
+                                            `Tk. ${item.price.toFixed(0)}`}
+                                    </span>
+                                    ${item.delivery_charge === 0 ? 
+                                        `<span style="font-size: 0.7rem; font-weight: 700; color: #10b981; background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); border-radius: 4px; padding: 0.15rem 0.4rem; white-space: nowrap;"><i class="fa-solid fa-truck"></i> Free</span>` :
+                                        `<span style="font-size: 0.7rem; font-weight: 600; color: var(--text-muted); background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 4px; padding: 0.15rem 0.4rem; white-space: nowrap;">Del: Tk.50</span>`
+                                    }
+                                </div>
                                 <div style="display: flex; gap: 0.35rem; flex-wrap: wrap;">
                                     <button class="btn btn-glass btn-sm" onclick="openEditDishModal(${item.id})" style="padding: 0.4rem 0.6rem; border-color: rgba(59, 130, 246, 0.3); color: #3b82f6; width: auto;" title="Edit dish details">
                                         <i class="fa-solid fa-pen-to-square"></i> Edit
@@ -317,6 +355,26 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                     </div>
                 `;
             }).join('');
+        }
+
+        function addVariationRow(type, name = '', price = '') {
+            const container = document.getElementById(type === 'edit' ? 'edit-variations-container' : 'add-variations-container');
+            if (!container) return;
+            
+            const div = document.createElement('div');
+            div.className = 'variation-row';
+            div.style.display = 'flex';
+            div.style.gap = '0.5rem';
+            div.style.alignItems = 'center';
+            div.style.marginTop = '0.25rem';
+            div.innerHTML = `
+                <input type="text" class="form-input var-name" placeholder="Name (e.g. 1 Litre, Double Patty)" value="${name}" required style="flex: 2; margin: 0; background-color: rgba(15, 23, 42, 0.5); border: 1px solid rgba(255, 255, 255, 0.08); color: white;">
+                <input type="number" class="form-input var-price" placeholder="Price (Tk)" value="${price}" required style="flex: 1; margin: 0; background-color: rgba(15, 23, 42, 0.5); border: 1px solid rgba(255, 255, 255, 0.08); color: white;">
+                <button type="button" class="btn btn-glass btn-sm" onclick="this.parentElement.remove()" style="padding: 0.55rem; width: auto; color: var(--danger); border-color: rgba(239, 68, 68, 0.2); margin: 0;">
+                    <i class="fa-solid fa-trash"></i>
+                </button>
+            `;
+            container.appendChild(div);
         }
 
         function previewLocalImage(e) {
@@ -351,6 +409,7 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
             const discount_price = discountPriceVal ? parseFloat(discountPriceVal) : '';
             const cost_price = parseFloat(document.getElementById('dish-cost').value);
             const category = document.getElementById('dish-category').value;
+            const delivery_charge = parseInt(document.getElementById('dish-delivery-charge').value);
             const imgUrl = document.getElementById('dish-img').value;
             const desc = document.getElementById('dish-desc').value;
             const fileInput = document.getElementById('dish-file');
@@ -362,15 +421,26 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                 submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Saving...`;
             }
 
-            try {
+                const variations = [];
+                const varRows = document.querySelectorAll('#add-variations-container .variation-row');
+                varRows.forEach(row => {
+                    const varName = row.querySelector('.var-name').value.trim();
+                    const varPrice = parseFloat(row.querySelector('.var-price').value);
+                    if (varName) {
+                        variations.push({ name: varName, price: isNaN(varPrice) ? 0 : varPrice });
+                    }
+                });
+
                 const formData = new FormData();
                 formData.append('name', name);
                 formData.append('price', price);
                 formData.append('cost_price', cost_price);
                 formData.append('discount_price', discount_price);
+                formData.append('delivery_charge', delivery_charge);
                 formData.append('category', category);
                 formData.append('description', desc);
                 formData.append('image_url', imgUrl);
+                formData.append('variations', JSON.stringify(variations));
                 
                 if (fileInput && fileInput.files[0]) {
                     formData.append('dish_image', fileInput.files[0]);
@@ -387,6 +457,10 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                         window.NotificationSystem.toast('success', 'Recipe Published', `Successfully added '${name}' to catalog list.`);
                     }
                     document.getElementById('add-dish-form').reset();
+                    
+                    // Clear variations container
+                    const addVarContainer = document.getElementById('add-variations-container');
+                    if (addVarContainer) addVarContainer.innerHTML = '';
                     
                     // Reset upload preview
                     const previewContainer = document.getElementById('image-preview-container');
@@ -662,6 +736,12 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
             document.getElementById('edit-dish-discount-price').value = item.discount_price !== null ? item.discount_price : '';
             document.getElementById('edit-dish-cost').value = item.cost_price;
             
+            // Pre-fill delivery charge
+            const editDeliveryChargeSelect = document.getElementById('edit-dish-delivery-charge');
+            if (editDeliveryChargeSelect) {
+                editDeliveryChargeSelect.value = (item.delivery_charge !== undefined && item.delivery_charge !== null) ? String(item.delivery_charge) : '50';
+            }
+            
             // Populate category select list
             const catSelect = document.getElementById('edit-dish-category');
             if (catSelect) {
@@ -672,6 +752,17 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
             
             document.getElementById('edit-dish-img').value = item.image_url.startsWith('../images/') ? '' : item.image_url;
             document.getElementById('edit-dish-desc').value = item.description;
+
+            // Populate variations in edit modal
+            const editVarContainer = document.getElementById('edit-variations-container');
+            if (editVarContainer) {
+                editVarContainer.innerHTML = '';
+                if (item.variations && item.variations.length > 0) {
+                    item.variations.forEach(v => {
+                        addVariationRow('edit', v.name, v.price);
+                    });
+                }
+            }
 
             // Reset image file input and preview
             document.getElementById('edit-dish-file').value = '';
@@ -735,6 +826,7 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
             const discount_price = discountPriceVal ? parseFloat(discountPriceVal) : '';
             const cost_price = parseFloat(document.getElementById('edit-dish-cost').value);
             const category = document.getElementById('edit-dish-category').value;
+            const delivery_charge = parseInt(document.getElementById('edit-dish-delivery-charge').value);
             const imgUrl = document.getElementById('edit-dish-img').value;
             const desc = document.getElementById('edit-dish-desc').value;
             const fileInput = document.getElementById('edit-dish-file');
@@ -746,15 +838,27 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
             }
 
             try {
+                const variations = [];
+                const varRows = document.querySelectorAll('#edit-variations-container .variation-row');
+                varRows.forEach(row => {
+                    const varName = row.querySelector('.var-name').value.trim();
+                    const varPrice = parseFloat(row.querySelector('.var-price').value);
+                    if (varName) {
+                        variations.push({ name: varName, price: isNaN(varPrice) ? 0 : varPrice });
+                    }
+                });
+
                 const formData = new FormData();
                 formData.append('id', id);
                 formData.append('name', name);
                 formData.append('price', price);
                 formData.append('cost_price', cost_price);
                 formData.append('discount_price', discount_price);
+                formData.append('delivery_charge', isNaN(delivery_charge) ? 50 : delivery_charge);
                 formData.append('category', category);
                 formData.append('description', desc);
                 formData.append('image_url', imgUrl);
+                formData.append('variations', JSON.stringify(variations));
                 
                 if (fileInput && fileInput.files[0]) {
                     formData.append('dish_image', fileInput.files[0]);
@@ -858,6 +962,13 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                             <!-- Populated dynamically -->
                         </select>
                     </div>
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label class="form-label" for="edit-dish-delivery-charge">Delivery Charge</label>
+                        <select class="form-input form-select" id="edit-dish-delivery-charge" style="background-color: rgb(15, 23, 42); border: 1px solid rgba(255, 255, 255, 0.08); color: white;">
+                            <option value="50">Standard - Tk. 50</option>
+                            <option value="0">Free Delivery - Tk. 0</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div class="form-group">
@@ -879,6 +990,18 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                         <div id="edit-image-preview-container" style="display: none; width: 48px; height: 48px; border-radius: var(--radius-sm); overflow: hidden; border: 1px solid var(--border-color); box-shadow: var(--shadow-sm);">
                             <img id="edit-image-preview" src="" alt="Preview" style="width: 100%; height: 100%; object-fit: cover;">
                         </div>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 1.5rem;">
+                    <label class="form-label" style="display: flex; justify-content: space-between; align-items: center;">
+                        <span>Product Variations</span>
+                        <button type="button" class="btn btn-glass btn-sm" onclick="addVariationRow('edit')" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; border-color: rgba(234, 103, 33, 0.3); color: var(--primary); width: auto;">
+                            <i class="fa-solid fa-plus"></i> Add Variation
+                        </button>
+                    </label>
+                    <div id="edit-variations-container" style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem;">
+                        <!-- Dynamic variation rows will be added here -->
                     </div>
                 </div>
 

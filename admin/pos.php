@@ -522,12 +522,22 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                     `Tk. ${item.discount_price.toFixed(0)} <del style="font-size: 0.75rem; color: var(--text-muted); margin-left: 0.35rem;">Tk. ${item.price.toFixed(0)}</del>` : 
                     `Tk. ${item.price.toFixed(0)}`;
 
+                let variationsDropdown = '';
+                if (item.variations && item.variations.length > 0) {
+                    variationsDropdown = `
+                        <select class="form-input form-select pos-var-select" style="font-size: 0.75rem; padding: 0.25rem 0.5rem; margin-top: 0.5rem; height: auto; background: var(--bg-dark); color: white; border-color: rgba(255,255,255,0.08);" onclick="event.stopPropagation()">
+                            ${item.variations.map(v => `<option value="${v.id}">${v.name} (Tk. ${parseFloat(v.price).toFixed(0)})</option>`).join('')}
+                        </select>
+                    `;
+                }
+
                 return `
-                    <div class="pos-item-card" onclick="addToPOSCart(${item.id})">
+                    <div class="pos-item-card" onclick="handlePOSCardClick(event, ${item.id})">
                         <img src="${img}" alt="${item.name}" class="pos-item-img" onerror="this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=600'">
                         <div class="pos-item-body">
                             <h4 class="pos-item-title">${item.name}</h4>
                             <span class="pos-item-price">${priceHtml}</span>
+                            ${variationsDropdown}
                         </div>
                     </div>
                 `;
@@ -553,39 +563,62 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
             renderPOSGrid(filtered);
         }
 
-        function addToPOSCart(id) {
+        function handlePOSCardClick(event, id) {
+            const select = event.currentTarget.querySelector('.pos-var-select');
+            let variationId = null;
+            if (select) {
+                variationId = parseInt(select.value) || null;
+            }
+            addToPOSCart(id, variationId);
+        }
+
+        function addToPOSCart(id, variationId = null) {
             const item = menuItems.find(item => item.id === id);
             if (!item) return;
 
-            const activePrice = item.discount_price !== null && item.discount_price > 0 ? item.discount_price : item.price;
+            let price = item.discount_price !== null && item.discount_price > 0 ? item.discount_price : item.price;
+            let variationName = null;
 
-            const existing = posCart.find(cartItem => cartItem.id === id);
+            if (variationId !== null && item.variations) {
+                const variation = item.variations.find(v => parseInt(v.id) === variationId);
+                if (variation) {
+                    price = parseFloat(variation.price);
+                    variationName = variation.name;
+                }
+            }
+
+            const cartKey = variationId ? `${id}-${variationId}` : `${id}`;
+
+            const existing = posCart.find(cartItem => cartItem.cartKey === cartKey);
             if (existing) {
                 existing.quantity++;
             } else {
                 posCart.push({
+                    cartKey: cartKey,
                     id: item.id,
                     name: item.name,
-                    price: activePrice,
-                    quantity: 1
+                    price: price,
+                    quantity: 1,
+                    variation_id: variationId,
+                    variation_name: variationName
                 });
             }
             renderPOSCart();
         }
 
-        function changeQuantity(id, delta) {
-            const item = posCart.find(cartItem => cartItem.id === id);
+        function changeQuantity(cartKey, delta) {
+            const item = posCart.find(cartItem => cartItem.cartKey === cartKey);
             if (!item) return;
 
             item.quantity += delta;
             if (item.quantity <= 0) {
-                posCart = posCart.filter(cartItem => cartItem.id !== id);
+                posCart = posCart.filter(cartItem => cartItem.cartKey !== cartKey);
             }
             renderPOSCart();
         }
 
-        function removeCartItem(id) {
-            posCart = posCart.filter(cartItem => cartItem.id !== id);
+        function removeCartItem(cartKey) {
+            posCart = posCart.filter(cartItem => cartItem.cartKey !== cartKey);
             renderPOSCart();
         }
 
@@ -611,19 +644,20 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
 
             container.innerHTML = posCart.map(item => {
                 const subtotal = item.price * item.quantity;
+                const displayName = item.variation_name ? `${item.name} (${item.variation_name})` : item.name;
                 return `
                     <div class="pos-cart-row">
                         <div class="pos-cart-info">
-                            <div class="pos-cart-title">${item.name}</div>
+                            <div class="pos-cart-title">${displayName}</div>
                             <div class="pos-cart-price">Tk. ${item.price.toFixed(0)}</div>
                         </div>
                         <div class="pos-cart-qty-ctrl">
-                            <button type="button" class="pos-qty-btn" onclick="changeQuantity(${item.id}, -1)">-</button>
+                            <button type="button" class="pos-qty-btn" onclick="changeQuantity('${item.cartKey}', -1)">-</button>
                             <span class="pos-qty-val">${item.quantity}</span>
-                            <button type="button" class="pos-qty-btn" onclick="changeQuantity(${item.id}, 1)">+</button>
+                            <button type="button" class="pos-qty-btn" onclick="changeQuantity('${item.cartKey}', 1)">+</button>
                         </div>
                         <div class="pos-cart-subtotal">Tk. ${subtotal.toFixed(0)}</div>
-                        <button type="button" class="pos-remove-btn" onclick="removeCartItem(${item.id})">
+                        <button type="button" class="pos-remove-btn" onclick="removeCartItem('${item.cartKey}')">
                             <i class="fa-solid fa-trash-can"></i>
                         </button>
                     </div>

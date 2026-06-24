@@ -21,6 +21,7 @@ $price = null;
 $category = null;
 $description = null;
 $imageUrl = null;
+$delivery_charge = 50;
 
 // Determine content type of request
 $contentType = isset($_SERVER["CONTENT_TYPE"]) ? trim($_SERVER["CONTENT_TYPE"]) : '';
@@ -39,6 +40,7 @@ if (strpos($contentType, 'application/json') !== false) {
     $price = isset($input['price']) ? (float)$input['price'] : null;
     $cost_price = isset($input['cost_price']) ? (float)$input['cost_price'] : null;
     $discount_price = isset($input['discount_price']) && $input['discount_price'] !== '' ? (float)$input['discount_price'] : null;
+    $delivery_charge = isset($input['delivery_charge']) ? (int)$input['delivery_charge'] : 50;
     $category = isset($input['category']) ? trim($input['category']) : null;
     $description = isset($input['description']) ? trim($input['description']) : null;
     $imageUrl = isset($input['image_url']) ? trim($input['image_url']) : null;
@@ -49,6 +51,7 @@ if (strpos($contentType, 'application/json') !== false) {
     $price = isset($_POST['price']) ? (float)$_POST['price'] : null;
     $cost_price = isset($_POST['cost_price']) ? (float)$_POST['cost_price'] : null;
     $discount_price = isset($_POST['discount_price']) && $_POST['discount_price'] !== '' ? (float)$_POST['discount_price'] : null;
+    $delivery_charge = isset($_POST['delivery_charge']) ? (int)$_POST['delivery_charge'] : 50;
     $category = isset($_POST['category']) ? trim($_POST['category']) : null;
     $description = isset($_POST['description']) ? trim($_POST['description']) : null;
     $imageUrl = isset($_POST['image_url']) ? trim($_POST['image_url']) : null;
@@ -149,13 +152,49 @@ try {
         $cost_price = $price * 0.5;
     }
 
+    // Parse variations list from request
+    $variations = [];
+    if (strpos($contentType, 'application/json') !== false) {
+        $variations = isset($input['variations']) ? $input['variations'] : [];
+    } else {
+        $variationsJson = isset($_POST['variations']) ? $_POST['variations'] : '';
+        if (!empty($variationsJson)) {
+            $variations = json_decode($variationsJson, true);
+        }
+    }
+
+    $db->beginTransaction();
+
     $stmt = $db->prepare("
-        INSERT INTO menu_items (name, description, price, cost_price, discount_price, category, image_url, is_available) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, 1)
+        INSERT INTO menu_items (name, description, price, cost_price, discount_price, delivery_charge, category, image_url, is_available) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)
     ");
     
-    $stmt->execute([$name, $description, $price, $cost_price, $discount_price, $mappedCategory, $imageUrl]);
+    $stmt->execute([$name, $description, $price, $cost_price, $discount_price, $delivery_charge, $mappedCategory, $imageUrl]);
     $itemId = (int)$db->lastInsertId();
+
+    $savedVariations = [];
+    if (is_array($variations) && !empty($variations)) {
+        foreach ($variations as $var) {
+            $varName = isset($var['name']) ? trim($var['name']) : '';
+            $varPrice = isset($var['price']) ? (float)$var['price'] : 0.00;
+            if ($varName !== '') {
+                $stmtVar = $db->prepare("
+                    INSERT INTO menu_item_variations (menu_item_id, name, price, is_available) 
+                    VALUES (?, ?, ?, 1)
+                ");
+                $stmtVar->execute([$itemId, $varName, $varPrice]);
+                $varId = (int)$db->lastInsertId();
+                $savedVariations[] = [
+                    'id' => $varId,
+                    'name' => $varName,
+                    'price' => $varPrice
+                ];
+            }
+        }
+    }
+
+    $db->commit();
     
     sendJsonResponse(true, "Menu item added successfully.", [
         'id' => $itemId,
@@ -165,10 +204,14 @@ try {
         'discount_price' => $discount_price,
         'category' => $mappedCategory,
         'image_url' => $imageUrl,
-        'is_available' => 1
+        'is_available' => 1,
+        'variations' => $savedVariations
     ], 201);
 
 } catch (Exception $e) {
+    if (isset($db) && $db->inTransaction()) {
+        $db->rollBack();
+    }
     logCustomError("add-menu-item.php error: " . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
     sendJsonResponse(false, "Failed to add menu item: " . (APP_ENV === 'development' ? $e->getMessage() : "Internal Server Error."), null, 500);
 }

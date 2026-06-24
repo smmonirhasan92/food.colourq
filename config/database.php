@@ -254,6 +254,9 @@ class Database {
                 if (!in_array('discount_price', $colCheckMenu)) {
                     $db->exec("ALTER TABLE menu_items ADD COLUMN discount_price DECIMAL(10, 2) NULL DEFAULT NULL");
                 }
+                if (!in_array('delivery_charge', $colCheckMenu)) {
+                    $db->exec("ALTER TABLE menu_items ADD COLUMN delivery_charge INTEGER DEFAULT 50");
+                }
 
 
                 // Ensure POS and MFS payment columns exist on orders table in SQLite
@@ -292,6 +295,26 @@ class Database {
                         ('Dessert', 'dessert'),
                         ('Drink', 'drink')");
                 }
+
+                // Ensure menu_item_variations table exists (SQLite)
+                $db->exec("CREATE TABLE IF NOT EXISTS menu_item_variations (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    menu_item_id INTEGER NOT NULL,
+                    name VARCHAR(100) NOT NULL,
+                    price DECIMAL(10, 2) NOT NULL,
+                    is_available TINYINT DEFAULT 1,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (menu_item_id) REFERENCES menu_items (id) ON DELETE CASCADE
+                )");
+
+                // Ensure order_items columns exist (SQLite)
+                $colCheckOrderItems = $db->query("PRAGMA table_info(order_items)")->fetchAll(PDO::FETCH_COLUMN, 1);
+                if (!in_array('variation_id', $colCheckOrderItems)) {
+                    $db->exec("ALTER TABLE order_items ADD COLUMN variation_id INTEGER NULL");
+                }
+                if (!in_array('variation_name', $colCheckOrderItems)) {
+                    $db->exec("ALTER TABLE order_items ADD COLUMN variation_name VARCHAR(100) NULL");
+                }
             } else {
                 // MySQL Migrations
                 $db->exec("CREATE TABLE IF NOT EXISTS delivery_men (
@@ -329,6 +352,10 @@ class Database {
                 if (!$colsQueryMenuDisc->fetch()) {
                     $db->exec("ALTER TABLE menu_items ADD COLUMN discount_price DECIMAL(10, 2) NULL DEFAULT NULL");
                 }
+                $colsQueryMenuDelivery = $db->query("SHOW COLUMNS FROM menu_items LIKE 'delivery_charge'");
+                if (!$colsQueryMenuDelivery->fetch()) {
+                    $db->exec("ALTER TABLE menu_items ADD COLUMN delivery_charge INT DEFAULT 50");
+                }
 
 
                 // Ensure POS and MFS payment columns exist on orders table in MySQL
@@ -361,6 +388,23 @@ class Database {
                         ('Best Seller', 'main'),
                         ('Dessert', 'dessert'),
                         ('Drink', 'drink')");
+                }
+
+                // Ensure menu_item_variations table exists (MySQL)
+                $db->exec("CREATE TABLE IF NOT EXISTS menu_item_variations (
+                    id INT PRIMARY KEY AUTO_INCREMENT,
+                    menu_item_id INT NOT NULL,
+                    name VARCHAR(100) NOT NULL,
+                    price DECIMAL(10, 2) NOT NULL,
+                    is_available TINYINT DEFAULT 1,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (menu_item_id) REFERENCES menu_items (id) ON DELETE CASCADE
+                )");
+
+                // Ensure order_items columns exist (MySQL)
+                $colsQueryVarId = $db->query("SHOW COLUMNS FROM order_items LIKE 'variation_id'");
+                if (!$colsQueryVarId->fetch()) {
+                    $db->exec("ALTER TABLE order_items ADD COLUMN variation_id INT NULL, ADD COLUMN variation_name VARCHAR(100) NULL");
                 }
             }
         } catch (Exception $e) {

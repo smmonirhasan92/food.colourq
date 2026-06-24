@@ -28,7 +28,9 @@ CREATE TABLE IF NOT EXISTS menu_items (
     name VARCHAR(100) NOT NULL,
     description TEXT,
     price DECIMAL(10, 2) NOT NULL,
+    cost_price DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
     discount_price DECIMAL(10, 2) NULL DEFAULT NULL,
+    delivery_charge INTEGER DEFAULT 50,
     category VARCHAR(50) NOT NULL, -- 'appetizer', 'main', 'dessert', 'drink'
     image_url VARCHAR(255),
     is_available TINYINT DEFAULT 1,
@@ -73,9 +75,22 @@ CREATE TABLE IF NOT EXISTS order_items (
     id INTEGER PRIMARY KEY AUTO_INCREMENT,
     order_id INTEGER NOT NULL,
     menu_item_id INTEGER NOT NULL,
+    variation_id INTEGER NULL,
+    variation_name VARCHAR(100) NULL,
     quantity INTEGER NOT NULL,
     price DECIMAL(10, 2) NOT NULL,
     FOREIGN KEY (order_id) REFERENCES orders (id) ON DELETE CASCADE,
+    FOREIGN KEY (menu_item_id) REFERENCES menu_items (id) ON DELETE CASCADE
+);
+
+-- 4.5 Menu Item Variations Table
+CREATE TABLE IF NOT EXISTS menu_item_variations (
+    id INTEGER PRIMARY KEY AUTO_INCREMENT,
+    menu_item_id INTEGER NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    price DECIMAL(10, 2) NOT NULL,
+    is_available TINYINT DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (menu_item_id) REFERENCES menu_items (id) ON DELETE CASCADE
 );
 
