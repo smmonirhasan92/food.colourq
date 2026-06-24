@@ -251,6 +251,10 @@ class Database {
                 if (!in_array('is_deleted', $colCheckMenu)) {
                     $db->exec("ALTER TABLE menu_items ADD COLUMN is_deleted TINYINT DEFAULT 0");
                 }
+                if (!in_array('discount_price', $colCheckMenu)) {
+                    $db->exec("ALTER TABLE menu_items ADD COLUMN discount_price DECIMAL(10, 2) NULL DEFAULT NULL");
+                }
+
 
                 // Ensure POS and MFS payment columns exist on orders table in SQLite
                 if (!in_array('order_type', $colCheck)) {
@@ -321,6 +325,11 @@ class Database {
                 if (!$colsQueryMenuDel->fetch()) {
                     $db->exec("ALTER TABLE menu_items ADD COLUMN is_deleted TINYINT DEFAULT 0");
                 }
+                $colsQueryMenuDisc = $db->query("SHOW COLUMNS FROM menu_items LIKE 'discount_price'");
+                if (!$colsQueryMenuDisc->fetch()) {
+                    $db->exec("ALTER TABLE menu_items ADD COLUMN discount_price DECIMAL(10, 2) NULL DEFAULT NULL");
+                }
+
 
                 // Ensure POS and MFS payment columns exist on orders table in MySQL
                 $colsQueryPos = $db->query("SHOW COLUMNS FROM orders LIKE 'order_type'");

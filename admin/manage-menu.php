@@ -104,10 +104,14 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                             <input class="form-input" type="text" id="dish-name" required placeholder="e.g. Herb Crusted Ribeye">
                         </div>
 
-                        <div class="grid grid-cols-3" style="grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+                        <div class="grid grid-cols-4" style="grid-template-columns: 1fr 1fr 1fr 1fr; gap: 1rem;">
                             <div class="form-group">
                                 <label class="form-label" for="dish-price">Price (Tk.)</label>
                                 <input class="form-input" type="number" id="dish-price" step="1" required placeholder="e.g. 450">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="dish-discount-price">Discount (Tk.)</label>
+                                <input class="form-input" type="number" id="dish-discount-price" step="1" placeholder="Optional">
                             </div>
                             <div class="form-group">
                                 <label class="form-label" for="dish-cost">Cost (Tk.)</label>
@@ -283,7 +287,11 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                             <h4 class="menu-card-title" style="font-size: 1.1rem; color: var(--text-primary);">${item.name}</h4>
                             <p class="menu-card-desc" style="font-size: 0.8rem; color: var(--text-muted);">${item.description}</p>
                             <div class="menu-card-footer" style="padding-top: 0.75rem; border-top: 1px solid var(--border-color);">
-                                <span class="menu-card-price" style="font-size: 1.15rem; color: var(--primary);">Tk. ${item.price.toFixed(0)}</span>
+                                <span class="menu-card-price" style="font-size: 1.15rem; color: var(--primary);">
+                                    ${item.discount_price && item.discount_price > 0 ? 
+                                        `Tk. ${item.discount_price.toFixed(0)} <del style="font-size: 0.8rem; color: var(--text-muted); margin-left: 0.35rem;">Tk. ${item.price.toFixed(0)}</del>` : 
+                                        `Tk. ${item.price.toFixed(0)}`}
+                                </span>
                                 <div style="display: flex; gap: 0.35rem; flex-wrap: wrap;">
                                     <button class="btn btn-glass btn-sm" onclick="openEditDishModal(${item.id})" style="padding: 0.4rem 0.6rem; border-color: rgba(59, 130, 246, 0.3); color: #3b82f6; width: auto;" title="Edit dish details">
                                         <i class="fa-solid fa-pen-to-square"></i> Edit
@@ -330,6 +338,8 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
 
             const name = document.getElementById('dish-name').value;
             const price = parseFloat(document.getElementById('dish-price').value);
+            const discountPriceVal = document.getElementById('dish-discount-price').value;
+            const discount_price = discountPriceVal ? parseFloat(discountPriceVal) : '';
             const cost_price = parseFloat(document.getElementById('dish-cost').value);
             const category = document.getElementById('dish-category').value;
             const imgUrl = document.getElementById('dish-img').value;
@@ -348,6 +358,7 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                 formData.append('name', name);
                 formData.append('price', price);
                 formData.append('cost_price', cost_price);
+                formData.append('discount_price', discount_price);
                 formData.append('category', category);
                 formData.append('description', desc);
                 formData.append('image_url', imgUrl);
@@ -639,6 +650,7 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
             document.getElementById('edit-dish-id').value = item.id;
             document.getElementById('edit-dish-name').value = item.name;
             document.getElementById('edit-dish-price').value = item.price;
+            document.getElementById('edit-dish-discount-price').value = item.discount_price !== null ? item.discount_price : '';
             document.getElementById('edit-dish-cost').value = item.cost_price;
             
             // Populate category select list
@@ -710,6 +722,8 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
             const id = document.getElementById('edit-dish-id').value;
             const name = document.getElementById('edit-dish-name').value;
             const price = parseFloat(document.getElementById('edit-dish-price').value);
+            const discountPriceVal = document.getElementById('edit-dish-discount-price').value;
+            const discount_price = discountPriceVal ? parseFloat(discountPriceVal) : '';
             const cost_price = parseFloat(document.getElementById('edit-dish-cost').value);
             const category = document.getElementById('edit-dish-category').value;
             const imgUrl = document.getElementById('edit-dish-img').value;
@@ -728,6 +742,7 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                 formData.append('name', name);
                 formData.append('price', price);
                 formData.append('cost_price', cost_price);
+                formData.append('discount_price', discount_price);
                 formData.append('category', category);
                 formData.append('description', desc);
                 formData.append('image_url', imgUrl);
@@ -815,10 +830,14 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                     <input class="form-input" type="text" id="edit-dish-name" required placeholder="e.g. Herb Crusted Ribeye" style="background-color: rgba(15, 23, 42, 0.5); border: 1px solid rgba(255, 255, 255, 0.08); color: white;">
                 </div>
 
-                <div class="grid grid-cols-3" style="grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+                <div class="grid grid-cols-4" style="grid-template-columns: 1fr 1fr 1fr 1fr; gap: 1rem;">
                     <div class="form-group">
                         <label class="form-label" for="edit-dish-price">Price (Tk.)</label>
                         <input class="form-input" type="number" id="edit-dish-price" step="1" required placeholder="e.g. 450" style="background-color: rgba(15, 23, 42, 0.5); border: 1px solid rgba(255, 255, 255, 0.08); color: white;">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="edit-dish-discount-price">Discount (Tk.)</label>
+                        <input class="form-input" type="number" id="edit-dish-discount-price" step="1" placeholder="Optional" style="background-color: rgba(15, 23, 42, 0.5); border: 1px solid rgba(255, 255, 255, 0.08); color: white;">
                     </div>
                     <div class="form-group">
                         <label class="form-label" for="edit-dish-cost">Cost (Tk.)</label>

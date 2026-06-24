@@ -12,6 +12,7 @@ class ShoppingCartManager {
         this.items = this.loadCart();
         this.deliveryFee = 60; // 60 Taka standard delivery fee in BD
         this.taxRate = 0.05; // 5% VAT in BD restaurant bill
+        this.loyaltyDiscountPercent = 0; // Dynamic loyalty discount percent!
         this.init();
     }
 
@@ -152,12 +153,16 @@ class ShoppingCartManager {
     getTotals() {
         const subtotal = this.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
         const tax = subtotal * this.taxRate;
-        const total = subtotal > 0 ? (subtotal + tax + this.deliveryFee) : 0;
+        const gross = subtotal > 0 ? (subtotal + tax + this.deliveryFee) : 0;
+        const discountAmount = gross * (this.loyaltyDiscountPercent / 100);
+        const total = gross - discountAmount;
 
         return {
             subtotal: subtotal.toFixed(0),
             tax: tax.toFixed(0),
             deliveryFee: subtotal > 0 ? this.deliveryFee.toFixed(0) : '0',
+            discountPercent: this.loyaltyDiscountPercent,
+            discountAmount: discountAmount.toFixed(0),
             total: total.toFixed(0)
         };
     }
@@ -320,6 +325,7 @@ function initCheckoutPageValidation() {
         const cleanPhone = phone.replace(/[^0-9]/g, '') || Date.now().toString();
         const dummyEmail = `${cleanPhone}@crispybd.com`;
 
+        const totals = window.CartSystem ? window.CartSystem.getTotals() : { discountPercent: 0, discountAmount: 0 };
         const payload = {
             customer_name: formData.get('customer_name'),
             username: formData.get('customer_name'),
@@ -330,6 +336,8 @@ function initCheckoutPageValidation() {
             payment_method: formData.get('payment_method'),
             mfs_sender_number: formData.get('mfs_sender_number') || null,
             mfs_transaction_id: formData.get('mfs_transaction_id') || null,
+            discount_percent: parseFloat(totals.discountPercent) || 0,
+            discount_amount: parseFloat(totals.discountAmount) || 0,
             items: cartItems.map(item => ({
                 menu_item_id: item.menu_item_id,
                 quantity: item.quantity
@@ -422,6 +430,59 @@ function initCheckoutPageValidation() {
             }, 1800);
         }
     });
+
+    // Setup phone field change listener for loyalty check
+    const phoneField = document.getElementById('cust-phone');
+    const loyaltyStatus = document.getElementById('checkout-loyalty-status');
+    let loyaltyDebounce;
+
+    if (phoneField && loyaltyStatus) {
+        const checkPhoneLoyalty = () => {
+            const phoneVal = phoneField.value.trim();
+            if (phoneVal.length < 5) {
+                loyaltyStatus.innerHTML = '';
+                if (window.CartSystem && window.CartSystem.loyaltyDiscountPercent > 0) {
+                    window.CartSystem.loyaltyDiscountPercent = 0;
+                    window.CartSystem.saveCart();
+                }
+                return;
+            }
+
+            clearTimeout(loyaltyDebounce);
+            loyaltyDebounce = setTimeout(async () => {
+                try {
+                    const response = await fetch(`../api/check-customer.php?phone=${encodeURIComponent(phoneVal)}`);
+                    const result = await response.json();
+                    
+                    if (result.success && result.data && result.data.exists && result.data.order_count > 0) {
+                        loyaltyStatus.innerHTML = `<span style="color: var(--success);"><i class="fa-solid fa-crown"></i> Loyal Customer (${result.data.order_count} past orders). 5% discount applied!</span>`;
+                        if (window.CartSystem) {
+                            window.CartSystem.loyaltyDiscountPercent = 5;
+                            window.CartSystem.saveCart();
+                        }
+                    } else {
+                        loyaltyStatus.innerHTML = '';
+                        if (window.CartSystem && window.CartSystem.loyaltyDiscountPercent > 0) {
+                            window.CartSystem.loyaltyDiscountPercent = 0;
+                            window.CartSystem.saveCart();
+                        }
+                    }
+                } catch (e) {
+                    console.error('Loyalty check error:', e);
+                }
+            }, 500);
+        };
+
+        phoneField.addEventListener('input', checkPhoneLoyalty);
+        
+        // Listen to custom Auth events or run prefill check
+        document.addEventListener('auth:prefilled', checkPhoneLoyalty);
+        
+        // Run check once if prefilled on page load
+        if (phoneField.value) {
+            setTimeout(checkPhoneLoyalty, 600);
+        }
+    }
 }
 
 /**
@@ -640,5 +701,8 @@ class CustomerAuthSystem {
         if (nameField && !nameField.value) nameField.value = user.name || '';
         if (phoneField && !phoneField.value) phoneField.value = user.phone || '';
         if (addrField && !addrField.value && user.address) addrField.value = user.address || '';
+
+        // Dispatch a custom event to trigger loyalty check on prefill
+        document.dispatchEvent(new CustomEvent('auth:prefilled'));
     }
 }

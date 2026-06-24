@@ -19,7 +19,7 @@ try {
     $db = Database::getConnection();
     
     // Fetch all non-deleted items sorted by category and name
-    $query = "SELECT id, name, description, price, cost_price, category, image_url, is_available 
+    $query = "SELECT id, name, description, price, cost_price, discount_price, category, image_url, is_available 
               FROM menu_items 
               WHERE is_deleted = 0
               ORDER BY category ASC, name ASC";
@@ -32,6 +32,7 @@ try {
         $item['id'] = (int)$item['id'];
         $item['price'] = (float)$item['price'];
         $item['cost_price'] = (float)($item['cost_price'] ?? 0.00);
+        $item['discount_price'] = $item['discount_price'] !== null ? (float)$item['discount_price'] : null;
         $item['is_available'] = (int)$item['is_available'];
     }
     unset($item);

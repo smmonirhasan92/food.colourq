@@ -37,6 +37,9 @@ $paymentMethod = isset($input['payment_method']) ? $input['payment_method'] : 'c
 $mfsSenderNumber = isset($input['mfs_sender_number']) ? $input['mfs_sender_number'] : null;
 $mfsTransactionId = isset($input['mfs_transaction_id']) ? $input['mfs_transaction_id'] : null;
 
+$discountPercent = isset($input['discount_percent']) ? (float)$input['discount_percent'] : 0.00;
+$discountAmount = isset($input['discount_amount']) ? (float)$input['discount_amount'] : 0.00;
+
 // Validate required fields manually using mapped variables
 if (empty($username) || empty($email) || empty($phone) || empty($deliveryAddress) || empty($items)) {
     sendJsonResponse(false, "Missing required fields. Please ensure username/customer_name, email/customer_email, phone/customer_phone, delivery_address, and items/cart are provided.", null, 400);
@@ -122,7 +125,7 @@ try {
         }
         
         // Verify menu item availability and cost
-        $menuStmt = $db->prepare("SELECT id, name, price, is_available FROM menu_items WHERE id = ? LIMIT 1");
+        $menuStmt = $db->prepare("SELECT id, name, price, discount_price, is_available FROM menu_items WHERE id = ? LIMIT 1");
         $menuStmt->execute([$itemId]);
         $menuItem = $menuStmt->fetch();
         
@@ -134,7 +137,7 @@ try {
             sendJsonResponse(false, "Menu item '{$menuItem['name']}' is currently not available.", null, 400);
         }
         
-        $price = (float)$menuItem['price'];
+        $price = $menuItem['discount_price'] !== null && (float)$menuItem['discount_price'] > 0 ? (float)$menuItem['discount_price'] : (float)$menuItem['price'];
         $subtotal = $price * $qty;
         $totalPrice += $subtotal;
         
@@ -155,15 +158,42 @@ try {
         $orderNumber = 'FC-' . date('Ymd') . '-' . sprintf('%04d', rand(1000, 9999));
     }
     
+    // Calculate tax, delivery, and discount
+    $tax = $totalPrice * 0.05; // 5% tax
+    $deliveryFee = 60.00;
+    $grossTotal = $totalPrice + $tax + $deliveryFee;
+    
+    // Check repeat customer loyalty status (has completed/pending/preparing orders)
+    $stmtCheck = $db->prepare("SELECT COUNT(id) FROM orders WHERE phone = ? LIMIT 1");
+    $stmtCheck->execute([$phone]);
+    $pastOrdersCount = (int)$stmtCheck->fetchColumn();
+    
+    if ($pastOrdersCount > 0) {
+        $discountPercent = 5.00;
+        $discountAmount = $grossTotal * 0.05;
+    } else {
+        $discountPercent = 0.00;
+        $discountAmount = 0.00;
+    }
+    
+    $netTotal = $grossTotal - $discountAmount;
+
     // Start transactional processing
     $db->beginTransaction();
     
     // 1. Insert into orders table
     $insertOrder = $db->prepare("
-        INSERT INTO orders (user_id, order_number, total_price, status, delivery_address, phone, is_notified, order_type, payment_method, mfs_sender_number, mfs_transaction_id) 
-        VALUES (?, ?, ?, 'pending', ?, ?, 0, 'online', ?, ?, ?)
+        INSERT INTO orders (
+            user_id, order_number, total_price, status, delivery_address, 
+            phone, is_notified, order_type, discount_percent, discount_amount, 
+            payment_method, mfs_sender_number, mfs_transaction_id
+        ) VALUES (?, ?, ?, 'pending', ?, ?, 0, 'online', ?, ?, ?, ?, ?)
     ");
-    $insertOrder->execute([$userId, $orderNumber, $totalPrice, $deliveryAddress, $phone, $paymentMethod, $mfsSenderNumber, $mfsTransactionId]);
+    $insertOrder->execute([
+        $userId, $orderNumber, $netTotal, $deliveryAddress, 
+        $phone, $discountPercent, $discountAmount,
+        $paymentMethod, $mfsSenderNumber, $mfsTransactionId
+    ]);
     $orderId = (int)$db->lastInsertId();
     
     // 2. Insert into order_items table
@@ -181,7 +211,7 @@ try {
     $adminRow = $adminStmt->fetch();
     $adminId = $adminRow ? (int)$adminRow['id'] : 1; // Fallback to 1
     
-    $notificationMsg = "New order {$orderNumber} placed by {$username}. Total: Tk. " . number_format($totalPrice, 0) . " (" . strtoupper($paymentMethod) . ")";
+    $notificationMsg = "New order {$orderNumber} placed by {$username}. Total: Tk. " . number_format($netTotal, 0) . " (" . strtoupper($paymentMethod) . ")";
     $insertNotification = $db->prepare("
         INSERT INTO notifications_log (user_id, order_id, message, is_read) 
         VALUES (?, ?, ?, 0)
@@ -195,7 +225,7 @@ try {
     sendJsonResponse(true, "Order placed successfully.", [
         'order_id' => $orderId,
         'order_number' => $orderNumber,
-        'total_price' => $totalPrice,
+        'total_price' => $netTotal,
         'status' => 'pending'
     ], 201);
     

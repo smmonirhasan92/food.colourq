@@ -125,7 +125,7 @@ try {
         }
         
         // Fetch price and check availability
-        $menuStmt = $db->prepare("SELECT id, name, price, is_available FROM menu_items WHERE id = ? LIMIT 1");
+        $menuStmt = $db->prepare("SELECT id, name, price, discount_price, is_available FROM menu_items WHERE id = ? LIMIT 1");
         $menuStmt->execute([$itemId]);
         $menuItem = $menuStmt->fetch();
         
@@ -137,7 +137,7 @@ try {
             sendJsonResponse(false, "Menu item '{$menuItem['name']}' is not available.", null, 400);
         }
         
-        $price = (float)$menuItem['price'];
+        $price = $menuItem['discount_price'] !== null && (float)$menuItem['discount_price'] > 0 ? (float)$menuItem['discount_price'] : (float)$menuItem['price'];
         $grossTotal += ($price * $qty);
         
         $validatedItems[] = [

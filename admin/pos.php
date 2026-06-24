@@ -518,12 +518,16 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                     if (premiumImageMap[filename]) img = premiumImageMap[filename];
                 }
 
+                const priceHtml = item.discount_price !== null && item.discount_price > 0 ? 
+                    `Tk. ${item.discount_price.toFixed(0)} <del style="font-size: 0.75rem; color: var(--text-muted); margin-left: 0.35rem;">Tk. ${item.price.toFixed(0)}</del>` : 
+                    `Tk. ${item.price.toFixed(0)}`;
+
                 return `
                     <div class="pos-item-card" onclick="addToPOSCart(${item.id})">
                         <img src="${img}" alt="${item.name}" class="pos-item-img" onerror="this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=600'">
                         <div class="pos-item-body">
                             <h4 class="pos-item-title">${item.name}</h4>
-                            <span class="pos-item-price">Tk. ${item.price.toFixed(0)}</span>
+                            <span class="pos-item-price">${priceHtml}</span>
                         </div>
                     </div>
                 `;
@@ -553,6 +557,8 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
             const item = menuItems.find(item => item.id === id);
             if (!item) return;
 
+            const activePrice = item.discount_price !== null && item.discount_price > 0 ? item.discount_price : item.price;
+
             const existing = posCart.find(cartItem => cartItem.id === id);
             if (existing) {
                 existing.quantity++;
@@ -560,7 +566,7 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                 posCart.push({
                     id: item.id,
                     name: item.name,
-                    price: item.price,
+                    price: activePrice,
                     quantity: 1
                 });
             }

@@ -41,6 +41,7 @@ if (strpos($contentType, 'application/json') !== false) {
     $name = isset($input['name']) ? trim($input['name']) : null;
     $price = isset($input['price']) ? (float)$input['price'] : null;
     $cost_price = isset($input['cost_price']) ? (float)$input['cost_price'] : null;
+    $discount_price = isset($input['discount_price']) && $input['discount_price'] !== '' ? (float)$input['discount_price'] : null;
     $category = isset($input['category']) ? trim($input['category']) : null;
     $description = isset($input['description']) ? trim($input['description']) : null;
     $imageUrl = isset($input['image_url']) ? trim($input['image_url']) : null;
@@ -51,6 +52,7 @@ if (strpos($contentType, 'application/json') !== false) {
     $name = isset($_POST['name']) ? trim($_POST['name']) : null;
     $price = isset($_POST['price']) ? (float)$_POST['price'] : null;
     $cost_price = isset($_POST['cost_price']) ? (float)$_POST['cost_price'] : null;
+    $discount_price = isset($_POST['discount_price']) && $_POST['discount_price'] !== '' ? (float)$_POST['discount_price'] : null;
     $category = isset($_POST['category']) ? trim($_POST['category']) : null;
     $description = isset($_POST['description']) ? trim($_POST['description']) : null;
     $imageUrl = isset($_POST['image_url']) ? trim($_POST['image_url']) : null;
@@ -100,20 +102,14 @@ if ($price <= 0) {
     sendJsonResponse(false, "Price must be a positive number.", null, 400);
 }
 
-// Category mapping helper to match storefront categories
-$categoryMapping = [
-    'Hot Starters' => 'appetizer',
-    'Gourmet Mains' => 'main',
-    'Organic Bowls' => 'main',
-    'Desserts' => 'dessert',
-    'Drinks' => 'drink',
-    'appetizer' => 'appetizer',
-    'main' => 'main',
-    'dessert' => 'dessert',
-    'drink' => 'drink'
-];
-
-$mappedCategory = isset($categoryMapping[$category]) ? $categoryMapping[$category] : 'appetizer';
+if ($discount_price !== null) {
+    if ($discount_price <= 0) {
+        sendJsonResponse(false, "Discount price must be greater than zero.", null, 400);
+    }
+    if ($discount_price >= $price) {
+        sendJsonResponse(false, "Discount price must be less than the original price.", null, 400);
+    }
+}
 
 try {
     $db = Database::getConnection();
@@ -125,6 +121,40 @@ try {
     
     if (!$existingItem) {
         sendJsonResponse(false, "Menu item not found.", null, 404);
+    }
+
+    // Fetch valid categories from the database dynamically
+    $categoriesStmt = $db->query("SELECT name, slug FROM menu_categories");
+    $dbCategories = $categoriesStmt->fetchAll();
+    
+    $validSlugs = array_column($dbCategories, 'slug');
+    
+    // Support mapping display names to standard slugs
+    $categoryMapping = [
+        'Hot Starters' => 'appetizer',
+        'Gourmet Mains' => 'main',
+        'Organic Bowls' => 'main',
+        'Desserts' => 'dessert',
+        'Drinks' => 'drink',
+        'Starter' => 'appetizer',
+        'Best Seller' => 'main',
+        'Dessert' => 'dessert',
+        'Drink' => 'drink'
+    ];
+    
+    foreach ($dbCategories as $dbCat) {
+        $categoryMapping[$dbCat['name']] = $dbCat['slug'];
+    }
+
+    $mappedCategory = 'appetizer';
+    if (in_array($category, $validSlugs)) {
+        $mappedCategory = $category;
+    } elseif (isset($categoryMapping[$category])) {
+        $mappedCategory = $categoryMapping[$category];
+    } else {
+        if (!empty($validSlugs)) {
+            $mappedCategory = $validSlugs[0];
+        }
     }
     
     // Keep old image if no new image was uploaded / provided
@@ -139,17 +169,18 @@ try {
 
     $stmt = $db->prepare("
         UPDATE menu_items 
-        SET name = ?, description = ?, price = ?, cost_price = ?, category = ?, image_url = ?
+        SET name = ?, description = ?, price = ?, cost_price = ?, discount_price = ?, category = ?, image_url = ?
         WHERE id = ?
     ");
     
-    $stmt->execute([$name, $description, $price, $cost_price, $mappedCategory, $imageUrl, $id]);
+    $stmt->execute([$name, $description, $price, $cost_price, $discount_price, $mappedCategory, $imageUrl, $id]);
     
     sendJsonResponse(true, "Menu item updated successfully.", [
         'id' => $id,
         'name' => $name,
         'price' => $price,
         'cost_price' => $cost_price,
+        'discount_price' => $discount_price,
         'category' => $mappedCategory,
         'image_url' => $imageUrl
     ]);

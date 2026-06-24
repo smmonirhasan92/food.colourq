@@ -302,6 +302,12 @@
                                 
                                 const optimizedImg = optimizeUnsplashUrl(img);
                                 
+                                const hasDiscount = item.discount_price !== null && item.discount_price > 0;
+                                const activePrice = hasDiscount ? item.discount_price : item.price;
+                                const priceHtml = hasDiscount ? 
+                                    `Tk. ${item.discount_price.toFixed(0)} <del style="font-size: 0.85rem; color: var(--text-muted); margin-left: 0.5rem;">Tk. ${item.price.toFixed(0)}</del>` : 
+                                    `Tk. ${item.price.toFixed(0)}`;
+
                                 htmlContent += `
                                     <div class="glass-panel glass-panel-interactive menu-card" data-category="${categoryKey}">
                                         <div class="menu-card-img-container">
@@ -313,20 +319,20 @@
                                             <p class="menu-card-desc">${item.description}</p>
                                             <div class="menu-card-footer" style="flex-direction: column; align-items: stretch; gap: 0.75rem; border-top: 1px solid var(--border-color); padding-top: 1rem; width: 100%;">
                                                 <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                                                    <span class="menu-card-price">Tk. ${item.price.toFixed(0)}</span>
+                                                    <span class="menu-card-price">${priceHtml}</span>
                                                 </div>
                                                 <div style="display: flex; gap: 0.5rem; width: 100%;">
                                                     <button class="btn btn-secondary btn-sm add-to-cart-btn" 
                                                             data-id="dish-${item.id}" 
                                                             data-name="${item.name}" 
-                                                            data-price="${item.price}" 
+                                                            data-price="${activePrice}" 
                                                             data-image="${optimizedImg}"
                                                             style="flex: 1; padding: 0.4rem 0.6rem; font-size: 0.8rem;">
                                                         <i class="fa-solid fa-plus"></i> Add
                                                     </button>
                                                     <button class="btn btn-primary btn-sm buy-now-btn" 
                                                             style="flex: 1.2; padding: 0.4rem 0.6rem; font-size: 0.8rem; background: var(--gradient-primary);"
-                                                            onclick="buyNow('dish-${item.id}', '${item.name.replace(/'/g, "\\'")}', ${item.price}, '${optimizedImg}')">
+                                                            onclick="buyNow('dish-${item.id}', '${item.name.replace(/'/g, "\\'")}', ${activePrice}, '${optimizedImg}')">
                                                         <i class="fa-solid fa-bolt"></i> Buy Now
                                                     </button>
                                                 </div>
@@ -682,7 +688,12 @@
             }
 
             if (totalEl) {
-                totalEl.textContent = `Tk. ${totals.total}`;
+                if (parseFloat(totals.discountAmount) > 0) {
+                    const gross = parseFloat(totals.total) + parseFloat(totals.discountAmount);
+                    totalEl.innerHTML = `Tk. ${totals.total} <del style="font-size: 0.9rem; color: var(--text-muted); margin-left: 0.5rem; font-weight: 500;">Tk. ${gross.toFixed(0)}</del>`;
+                } else {
+                    totalEl.textContent = `Tk. ${totals.total}`;
+                }
             }
 
             if (items.length === 0) {
@@ -799,6 +810,7 @@
                     <div class="form-group" style="margin-bottom: 0;">
                         <label class="form-label" for="cust-phone">Phone Number</label>
                         <input class="form-input" type="tel" id="cust-phone" name="customer_phone" required placeholder="e.g. +8801712345678" style="padding: 0.75rem 1rem;">
+                        <div id="checkout-loyalty-status" style="margin-top: 0.35rem; font-size: 0.8rem; font-weight: 600;"></div>
                     </div>
                 </div>
 
