@@ -148,14 +148,21 @@ try {
         ];
     }
     
-    // Generate a unique order number (format: FC-YYYYMMDD-XXXX)
-    $orderNumber = 'FC-' . date('Ymd') . '-' . sprintf('%04d', rand(1000, 9999));
+    // Generate a sequential order number (format: CF-XX)
+    $stmtMax = $db->query("SELECT MAX(id) FROM orders");
+    $maxId = (int)$stmtMax->fetchColumn();
+    $nextId = $maxId + 1;
+    $orderNumber = 'CF-' . sprintf('%02d', $nextId);
     
-    // Ensure uniqueness of order number
-    $checkOrder = $db->prepare("SELECT id FROM orders WHERE order_number = ? LIMIT 1");
-    $checkOrder->execute([$orderNumber]);
-    if ($checkOrder->fetch()) {
-        $orderNumber = 'FC-' . date('Ymd') . '-' . sprintf('%04d', rand(1000, 9999));
+    // Ensure uniqueness
+    while (true) {
+        $checkOrder = $db->prepare("SELECT id FROM orders WHERE order_number = ? LIMIT 1");
+        $checkOrder->execute([$orderNumber]);
+        if (!$checkOrder->fetch()) {
+            break;
+        }
+        $nextId++;
+        $orderNumber = 'CF-' . sprintf('%02d', $nextId);
     }
     
     // Calculate tax, delivery, and discount

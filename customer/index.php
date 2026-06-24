@@ -139,6 +139,22 @@
         </section>
     </main>
 
+    <footer style="background-color: #ffffff; border-top: 1px solid var(--border-color); padding: 3rem 0; margin-top: 5rem; text-align: center;">
+        <div class="container">
+            <div style="font-family: var(--font-heading); font-weight: 800; font-size: 1.5rem; color: var(--text-primary); margin-bottom: 1rem;">
+                Crispy Chicken<span class="brand-dot"></span>
+            </div>
+            <div style="font-size: 0.95rem; color: var(--text-secondary); line-height: 1.6; max-width: 500px; margin: 0 auto 1.5rem;">
+                Food Court, Nodi Bangla Center Point<br>
+                Bhairab Town<br>
+                Phone: 01681-560308
+            </div>
+            <div style="font-size: 0.85rem; color: var(--text-muted); border-top: 1px solid var(--border-color); padding-top: 1.5rem; font-weight: 500;">
+                Powered By :- Crispy Chicken
+            </div>
+        </div>
+    </footer>
+
     <!-- Sliding Shopping Cart Drawer Overlay -->
     <aside class="cart-drawer">
         <div class="cart-drawer-header">

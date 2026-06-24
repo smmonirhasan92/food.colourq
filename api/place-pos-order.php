@@ -151,13 +151,21 @@ try {
     $discountAmount = $grossTotal * ($discountPercent / 100);
     $netTotal = $grossTotal - $discountAmount;
     
-    // 3. Generate Unique POS Order Number (Format: POS-YYYYMMDD-XXXX)
-    $orderNumber = 'POS-' . date('Ymd') . '-' . sprintf('%04d', rand(1000, 9999));
+    // 3. Generate Unique POS Order Number (Format: CF-XX)
+    $stmtMax = $db->query("SELECT MAX(id) FROM orders");
+    $maxId = (int)$stmtMax->fetchColumn();
+    $nextId = $maxId + 1;
+    $orderNumber = 'CF-' . sprintf('%02d', $nextId);
     
-    $checkOrder = $db->prepare("SELECT id FROM orders WHERE order_number = ? LIMIT 1");
-    $checkOrder->execute([$orderNumber]);
-    if ($checkOrder->fetch()) {
-        $orderNumber = 'POS-' . date('Ymd') . '-' . sprintf('%04d', rand(1000, 9999));
+    // Ensure uniqueness
+    while (true) {
+        $checkOrder = $db->prepare("SELECT id FROM orders WHERE order_number = ? LIMIT 1");
+        $checkOrder->execute([$orderNumber]);
+        if (!$checkOrder->fetch()) {
+            break;
+        }
+        $nextId++;
+        $orderNumber = 'CF-' . sprintf('%02d', $nextId);
     }
     
     // Start Transaction

@@ -135,7 +135,7 @@ try {
     <div class="text-center">
         <div class="brand-title">CRISPY CHICKEN</div>
         <div style="font-size: 11px;">Food Court, Nodi Bangla Center Point</div>
-        <div style="font-size: 11px;">Bhairab</div>
+        <div style="font-size: 11px;">Bhairab Town</div>
         <div style="font-size: 11px;">Phone: 01681-560308</div>
     </div>
 
@@ -221,7 +221,7 @@ try {
     <!-- Footer -->
     <div class="text-center" style="font-size: 11px; margin-top: 15px;">
         <div>Thank you for dining with us!</div>
-        <div style="font-weight: bold; margin-top: 5px;">Powered by Food ColourQ POS</div>
+        <div style="font-weight: bold; margin-top: 5px;">Powered By :- Crispy Chicken</div>
     </div>
 
 </body>
