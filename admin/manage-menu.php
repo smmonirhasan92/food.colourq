@@ -121,6 +121,7 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                             <div class="form-group">
                                 <label class="form-label" for="dish-discount-price">Offer Price (Tk.)</label>
                                 <input class="form-input" type="number" id="dish-discount-price" step="1" placeholder="Optional">
+                                <small style="color: var(--text-muted); font-size: 0.75rem; margin-top: 0.25rem; display: block;">Leave empty if no discount. (e.g. type 440 to give a 10 Tk discount on a 450 Tk item)</small>
                             </div>
                             <div class="form-group">
                                 <label class="form-label" for="dish-cost">Cost (Tk.)</label>
@@ -940,6 +941,7 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                     <div class="form-group">
                         <label class="form-label" for="edit-dish-discount-price">Offer Price (Tk.)</label>
                         <input class="form-input" type="number" id="edit-dish-discount-price" step="1" placeholder="Optional" style="background-color: rgba(15, 23, 42, 0.5); border: 1px solid rgba(255, 255, 255, 0.08); color: white;">
+                        <small style="color: var(--text-muted); font-size: 0.75rem; margin-top: 0.25rem; display: block;">Leave empty if no discount.</small>
                     </div>
                     <div class="form-group">
                         <label class="form-label" for="edit-dish-cost">Cost (Tk.)</label>
