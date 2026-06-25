@@ -183,9 +183,17 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                 </section>
                 <!-- Current Catalog Grid -->
                 <section style="display: flex; flex-direction: column; gap: 1.5rem;">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <h3 style="font-family: var(--font-heading); font-size: 1.25rem; color: var(--text-primary);">Active Offerings</h3>
-                        <span id="catalog-count-span" style="font-size: 0.9rem; color: var(--text-muted); font-weight: 500;">Showing 0 Recipes</span>
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <h3 style="font-family: var(--font-heading); font-size: 1.25rem; color: var(--text-primary); margin: 0;">Active Offerings</h3>
+                            <span id="catalog-count-span" style="font-size: 0.9rem; color: var(--text-muted); font-weight: 500;">Showing 0 Recipes</span>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
+                            <input type="text" id="filter-search-input" class="form-input" placeholder="Search by name..." style="margin: 0; padding: 0.4rem 0.8rem; min-width: 200px; font-size: 0.9rem; background-color: rgba(15, 23, 42, 0.5); border: 1px solid rgba(255, 255, 255, 0.08); color: white;">
+                            <select id="filter-category-select" class="form-input form-select" style="margin: 0; padding: 0.4rem 0.8rem; font-size: 0.9rem; width: auto; background-color: rgb(15, 23, 42); border: 1px solid rgba(255, 255, 255, 0.08); color: white;">
+                                <option value="all">All Categories</option>
+                            </select>
+                        </div>
                     </div>
 
                     <div class="grid grid-cols-2" id="admin-catalog-grid">
@@ -226,7 +234,11 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                 const result = await response.json();
                 if (result.success && result.data) {
                     activeItems = result.data;
-                    renderCatalog(result.data);
+                    if (typeof filterCatalog === 'function') {
+                        filterCatalog();
+                    } else {
+                        renderCatalog(result.data);
+                    }
                 } else {
                     throw new Error(result.message || 'API error');
                 }
@@ -474,7 +486,8 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                     is_available: 1
                 };
                 activeItems.push(mockItem);
-                renderCatalog(activeItems);
+                if (typeof filterCatalog === 'function') filterCatalog();
+                else renderCatalog(activeItems);
 
                 if (window.NotificationSystem) {
                     window.NotificationSystem.toast('success', 'Recipe Published (Simulated)', `Successfully added '${name}' to catalog list.`);
@@ -602,11 +615,31 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
 
         function populateCategoryDropdown(categories) {
             const select = document.getElementById('dish-category');
-            if (!select) return;
-            
-            select.innerHTML = categories.map(cat => {
-                return `<option value="${cat.slug}">${cat.name}</option>`;
-            }).join('');
+            if (select) {
+                select.innerHTML = categories.map(cat => {
+                    return `<option value="${cat.slug}">${cat.name}</option>`;
+                }).join('');
+            }
+
+            const filterSelect = document.getElementById('filter-category-select');
+            if (filterSelect) {
+                filterSelect.innerHTML = '<option value="all">All Categories</option>' + categories.map(cat => {
+                    return `<option value="${cat.slug}">${cat.name}</option>`;
+                }).join('');
+            }
+        }
+
+        function filterCatalog() {
+            const searchQuery = (document.getElementById('filter-search-input')?.value || '').toLowerCase();
+            const selectedCategory = document.getElementById('filter-category-select')?.value || 'all';
+
+            const filteredItems = activeItems.filter(item => {
+                const matchesSearch = item.name.toLowerCase().includes(searchQuery);
+                const matchesCategory = selectedCategory === 'all' || item.category === selectedCategory;
+                return matchesSearch && matchesCategory;
+            });
+
+            renderCatalog(filteredItems);
         }
 
         function renderCategoriesList(categories) {
@@ -873,6 +906,11 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
         window.addEventListener('load', async () => {
             await fetchCategories();
             await fetchMenuItems();
+
+            const searchInput = document.getElementById('filter-search-input');
+            const categorySelect = document.getElementById('filter-category-select');
+            if(searchInput) searchInput.addEventListener('input', filterCatalog);
+            if(categorySelect) categorySelect.addEventListener('change', filterCatalog);
         });
     </script>
 
