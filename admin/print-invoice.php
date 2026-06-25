@@ -54,6 +54,13 @@ try {
     <meta charset="UTF-8">
     <title>Invoice - <?php echo htmlspecialchars($order['order_number']); ?></title>
     <style>
+        * {
+            box-sizing: border-box;
+        }
+        @page {
+            size: 88mm auto;
+            margin: 4mm 6mm;
+        }
         body {
             font-family: 'Courier New', Courier, monospace;
             font-size: 13px;
@@ -61,8 +68,8 @@ try {
             color: #000;
             background: #fff;
             margin: 0;
-            padding: 10px;
-            width: 80mm;
+            padding: 0 6mm;
+            width: 88mm;
             box-sizing: border-box;
         }
         .text-center {
@@ -120,8 +127,8 @@ try {
         }
         @media print {
             body {
-                width: 80mm;
-                padding: 5px;
+                width: 88mm;
+                padding: 0 6mm;
             }
             .no-print {
                 display: none;
