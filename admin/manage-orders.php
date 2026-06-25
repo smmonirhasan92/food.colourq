@@ -528,9 +528,8 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
 
                 let receivedTime = 'Just now';
                 if (order.created_at) {
-                    const cleanDateStr = order.created_at.replace(/-/g, '/');
-                    const parsedDate = new Date(cleanDateStr);
-                    receivedTime = isNaN(parsedDate.getTime()) ? order.created_at : parsedDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    const parsedDate = new Date(order.created_at);
+                    receivedTime = isNaN(parsedDate.getTime()) ? order.created_at : parsedDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
                 }
 
                 const customerName = (order.customer && order.customer.username) ? order.customer.username : (order.username || order.customer_name || 'Client');
