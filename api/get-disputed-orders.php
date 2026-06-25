@@ -22,7 +22,7 @@ try {
     $query = "SELECT o.id, o.order_number, o.total_price, o.status, o.delivery_address, o.phone, 
                      o.dispute_status, o.dispute_category, o.dispute_description, o.dispute_reported_at,
                      o.feedback_rating, o.feedback_comment, o.created_at,
-                     u.username, u.email
+                     u.username, u.email, u.role
               FROM orders o
               JOIN users u ON o.user_id = u.id
               WHERE o.dispute_status IS NOT NULL AND o.dispute_status != ''
@@ -42,7 +42,7 @@ try {
     
     $placeholders = implode(',', array_fill(0, count($orderIds), '?'));
     
-    $itemsQuery = "SELECT oi.order_id, oi.menu_item_id, oi.quantity, oi.price, m.name AS item_name 
+    $itemsQuery = "SELECT oi.order_id, oi.menu_item_id, oi.quantity, oi.price, oi.variation_name, m.name AS item_name 
                    FROM order_items oi
                    JOIN menu_items m ON oi.menu_item_id = m.id
                    WHERE oi.order_id IN ($placeholders)";
@@ -62,6 +62,7 @@ try {
         $groupedItems[$orderId][] = [
             'menu_item_id' => (int)$item['menu_item_id'],
             'item_name' => $item['item_name'],
+            'variation_name' => $item['variation_name'],
             'quantity' => (int)$item['quantity'],
             'price' => (float)$item['price']
         ];
@@ -85,8 +86,14 @@ try {
             'feedback_rating' => $order['feedback_rating'] !== null ? (int)$order['feedback_rating'] : null,
             'feedback_comment' => $order['feedback_comment'],
             'created_at' => $order['created_at'],
-            'username' => $order['username'],
+            'username' => preg_replace('/ \d+$/', '', $order['username']),
             'email' => $order['email'],
+            'role' => $order['role'],
+            'customer' => [
+                'username' => preg_replace('/ \d+$/', '', $order['username']),
+                'email' => $order['email'],
+                'role' => $order['role']
+            ],
             'items' => isset($groupedItems[$id]) ? $groupedItems[$id] : []
         ];
     }

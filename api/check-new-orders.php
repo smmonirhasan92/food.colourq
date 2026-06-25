@@ -56,6 +56,7 @@ try {
     foreach ($newOrders as &$order) {
         $order['id'] = (int)$order['id'];
         $order['total_price'] = (float)$order['total_price'];
+        $order['username'] = preg_replace('/ \d+$/', '', $order['username']);
         // DB stores BD time (PHP uses date_default_timezone_set Asia/Dhaka)
         // Format as ISO 8601 with +06:00 so JS parses AM/PM correctly
         if (!empty($order['created_at'])) {

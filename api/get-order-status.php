@@ -52,7 +52,7 @@ try {
     
     // Fetch order line items
     $itemsStmt = $db->prepare("
-        SELECT oi.menu_item_id, oi.quantity, oi.price, m.name AS item_name, m.image_url 
+        SELECT oi.menu_item_id, oi.quantity, oi.price, oi.variation_name, m.name AS item_name, m.image_url 
         FROM order_items oi
         JOIN menu_items m ON oi.menu_item_id = m.id
         WHERE oi.order_id = ?
@@ -66,6 +66,7 @@ try {
         $formattedItems[] = [
             'menu_item_id' => (int)$item['menu_item_id'],
             'item_name' => $item['item_name'],
+            'variation_name' => $item['variation_name'],
             'quantity' => (int)$item['quantity'],
             'price' => (float)$item['price'],
             'image_url' => $item['image_url']
@@ -93,7 +94,7 @@ try {
         'delivery_man_name' => $order['delivery_man_name'],
         'delivery_man_phone' => $order['delivery_man_phone'],
         'customer' => [
-            'username' => $order['username'],
+            'username' => preg_replace('/ \d+$/', '', $order['username']),
             'email' => $order['email']
         ],
         'items' => $formattedItems

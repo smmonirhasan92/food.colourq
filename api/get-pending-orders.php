@@ -45,7 +45,7 @@ try {
     
     $placeholders = implode(',', array_fill(0, count($orderIds), '?'));
     
-    $itemsQuery = "SELECT oi.order_id, oi.menu_item_id, oi.quantity, oi.price, m.name AS item_name 
+    $itemsQuery = "SELECT oi.order_id, oi.menu_item_id, oi.quantity, oi.price, oi.variation_name, m.name AS item_name 
                    FROM order_items oi
                    JOIN menu_items m ON oi.menu_item_id = m.id
                    WHERE oi.order_id IN ($placeholders)";
@@ -65,6 +65,7 @@ try {
         $groupedItems[$orderId][] = [
             'menu_item_id' => (int)$item['menu_item_id'],
             'item_name' => $item['item_name'],
+            'variation_name' => $item['variation_name'],
             'quantity' => (int)$item['quantity'],
             'price' => (float)$item['price']
         ];
@@ -94,11 +95,11 @@ try {
             'mfs_sender_number' => $order['mfs_sender_number'],
             'mfs_transaction_id' => $order['mfs_transaction_id'],
             // Dynamic dual customer mapping to support direct and nested payload styles
-            'username' => $order['username'],
+            'username' => preg_replace('/ \d+$/', '', $order['username']),
             'email' => $order['email'],
             'role' => $order['role'],
             'customer' => [
-                'username' => $order['username'],
+                'username' => preg_replace('/ \d+$/', '', $order['username']),
                 'email' => $order['email'],
                 'role' => $order['role']
             ],
