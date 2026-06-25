@@ -16,3 +16,7 @@ scratch/
 images/*
 !images/payment_qr.png
 !images/burger_assembly/
+
+error_log
+*-wal
+*-shm
