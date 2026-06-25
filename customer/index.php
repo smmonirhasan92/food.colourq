@@ -746,7 +746,6 @@
                         <option value="nagad">Nagad</option>
                         <option value="rocket">Rocket</option>
                         <option value="card">Bank Transfer / Card</option>
-                        <option value="crypto">Cryptocurrency Gateway</option>
                     </select>
                 </div>
 
