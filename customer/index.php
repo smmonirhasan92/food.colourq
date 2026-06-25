@@ -697,9 +697,13 @@
                 <div id="modal-checkout-items-preview" style="max-height: 150px; overflow-y: auto; margin-bottom: 1rem; display: flex; flex-direction: column; gap: 0.75rem; padding-bottom: 0.75rem; border-bottom: 1px dashed var(--border-color);">
                     <!-- Populated via JS -->
                 </div>
-                <div style="display: flex; justify-content: space-between; font-size: 1.1rem; font-weight: 800; margin-bottom: 1.5rem; color: var(--text-primary);">
+                <div style="display: flex; justify-content: space-between; font-size: 1.1rem; font-weight: 800; margin-bottom: 1rem; color: var(--text-primary);">
                     <span>Total Bill:</span>
                     <span id="modal-checkout-total" style="color: var(--primary); font-weight: 800; font-family: var(--font-heading);">Tk. 0</span>
+                </div>
+
+                <div style="background: rgba(16, 185, 129, 0.1); border: 1px dashed rgba(16, 185, 129, 0.4); border-radius: var(--radius-sm); padding: 0.75rem; margin-bottom: 1.5rem; color: #10b981; font-weight: 700; text-align: center; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                    <i class="fa-solid fa-gift" style="font-size: 1.1rem;"></i> Order Tk 390 Get Free-0
                 </div>
 
                 <h4 style="font-size: 1.1rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; color: var(--text-primary);">

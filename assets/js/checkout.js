@@ -189,7 +189,13 @@ class ShoppingCartManager {
         const subtotal = this.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
         const tax = 0; // VAT removed
         
-        const deliveryFee = subtotal > 0 ? this.standardDeliveryFee : 0;
+        let deliveryFee = subtotal > 0 ? this.standardDeliveryFee : 0;
+        
+        // Free Delivery for orders >= 390
+        if (subtotal >= 390) {
+            deliveryFee = 0;
+        }
+
         const gross = subtotal > 0 ? (subtotal + tax + deliveryFee) : 0;
         const discountAmount = gross * (this.loyaltyDiscountPercent / 100);
         const total = gross - discountAmount;
