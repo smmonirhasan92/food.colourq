@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Home - Crispy Chicken</title>
     <!-- Google Fonts Outfit & Inter loaded inside style.css -->
-    <link rel="stylesheet" href="../assets/css/style.css">
-    <link rel="stylesheet" href="../assets/css/responsive.css">
+    <link rel="stylesheet" href="../assets/css/style.css?v=2.0">
+    <link rel="stylesheet" href="../assets/css/responsive.css?v=2.0">
     <!-- FontAwesome icons for glass icons and styling -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- GSAP for micro-animations fallback testing -->
@@ -642,25 +642,25 @@
                                 if (instructionsText) {
                                     instructionsText.innerHTML = 'বিকাশ অ্যাপের পেমেন্ট অপশন ব্যবহার করে নিচের কিউআর কোডটি স্ক্যান করুন অথবা আমাদের মার্চেন্ট নাম্বার <strong>01671018363</strong>-এ পেমেন্ট সম্পন্ন করে নিচের ফর্মটি পূরণ করুন:';
                                 }
-                                if (mfsSenderInput) mfsSenderInput.placeholder = 'যেমন: 01671018363';
+                                if (mfsSenderInput) mfsSenderInput.placeholder = 'যেমন: 01XXXXXXXXX';
                             } else if (method === 'nagad') {
                                 if (qrContainer) qrContainer.style.display = 'block';
                                 if (instructionsText) {
                                     instructionsText.innerHTML = 'নগদ অ্যাপের পেমেন্ট অপশন ব্যবহার করে নিচের কিউআর কোডটি স্ক্যান করুন অথবা আমাদের মার্চেন্ট নাম্বার <strong>01671018363</strong>-এ পেমেন্ট সম্পন্ন করে নিচের ফর্মটি পূরণ করুন:';
                                 }
-                                if (mfsSenderInput) mfsSenderInput.placeholder = 'যেমন: 01671018363';
+                                if (mfsSenderInput) mfsSenderInput.placeholder = 'যেমন: 01XXXXXXXXX';
                             } else if (method === 'card') {
                                 if (qrContainer) qrContainer.style.display = 'block';
                                 if (instructionsText) {
                                     instructionsText.innerHTML = 'আপনার ব্যাংক অ্যাপের মাধ্যমে পেমেন্ট করতে নিচের কিউআর কোডটি স্ক্যান করুন অথবা মার্চেন্ট নাম্বার <strong>01671018363</strong>-এ ট্রান্সফার সম্পন্ন করে নিচের ফর্মটি পূরণ করুন:';
                                 }
-                                if (mfsSenderInput) mfsSenderInput.placeholder = 'যেমন: 01671018363';
+                                if (mfsSenderInput) mfsSenderInput.placeholder = 'যেমন: 01XXXXXXXXX';
                             } else if (method === 'rocket') {
                                 if (qrContainer) qrContainer.style.display = 'none';
                                 if (instructionsText) {
                                     instructionsText.innerHTML = 'আমাদের রকেট নাম্বারে পেমেন্ট সম্পন্ন করে নিচের ফর্মটি পূরণ করুন:';
                                 }
-                                if (mfsSenderInput) mfsSenderInput.placeholder = 'যেমন: 017XXXXXXXX';
+                                if (mfsSenderInput) mfsSenderInput.placeholder = 'যেমন: 01XXXXXXXXX';
                             }
                         } else {
                             mfsSection.style.display = 'none';
@@ -713,7 +713,7 @@
                     </div>
                     <div class="form-group" style="margin-bottom: 0;">
                         <label class="form-label" for="cust-phone">Phone Number</label>
-                        <input class="form-input" type="tel" id="cust-phone" name="customer_phone" required placeholder="e.g. +8801712345678" style="padding: 0.75rem 1rem;">
+                        <input class="form-input" type="tel" id="cust-phone" name="customer_phone" required placeholder="e.g. 01XXXXXXXXX" style="padding: 0.75rem 1rem;">
                         <div id="checkout-loyalty-status" style="margin-top: 0.35rem; font-size: 0.8rem; font-weight: 600;"></div>
                     </div>
                 </div>
