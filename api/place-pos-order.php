@@ -187,17 +187,19 @@ try {
     // Start Transaction
     $db->beginTransaction();
     
+    $now = date('Y-m-d H:i:s');
+    
     // 4. Insert into orders table
     $insertOrder = $db->prepare("
         INSERT INTO orders (
             user_id, order_number, total_price, status, delivery_address, 
             phone, is_notified, order_type, discount_percent, discount_amount, 
-            mfs_sender_number, mfs_transaction_id
-        ) VALUES (?, ?, ?, ?, 'POS Counter', ?, 1, 'pos', ?, ?, ?, ?)
+            mfs_sender_number, mfs_transaction_id, created_at
+        ) VALUES (?, ?, ?, ?, 'POS Counter', ?, 1, 'pos', ?, ?, ?, ?, ?)
     ");
     $insertOrder->execute([
         $userId, $orderNumber, $netTotal, $orderStatus, $phone, 
-        $discountPercent, $discountAmount, $mfsSender, $mfsTxnId
+        $discountPercent, $discountAmount, $mfsSender, $mfsTxnId, $now
     ]);
     $orderId = (int)$db->lastInsertId();
     

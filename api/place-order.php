@@ -205,18 +205,20 @@ try {
     // Start transactional processing
     $db->beginTransaction();
     
+    $now = date('Y-m-d H:i:s');
+    
     // 1. Insert into orders table
     $insertOrder = $db->prepare("
         INSERT INTO orders (
             user_id, order_number, total_price, status, delivery_address, 
             phone, is_notified, order_type, discount_percent, discount_amount, 
-            payment_method, mfs_sender_number, mfs_transaction_id
-        ) VALUES (?, ?, ?, 'pending', ?, ?, 0, 'online', ?, ?, ?, ?, ?)
+            payment_method, mfs_sender_number, mfs_transaction_id, created_at
+        ) VALUES (?, ?, ?, 'pending', ?, ?, 0, 'online', ?, ?, ?, ?, ?, ?)
     ");
     $insertOrder->execute([
         $userId, $orderNumber, $netTotal, $deliveryAddress, 
         $phone, $discountPercent, $discountAmount,
-        $paymentMethod, $mfsSenderNumber, $mfsTransactionId
+        $paymentMethod, $mfsSenderNumber, $mfsTransactionId, $now
     ]);
     $orderId = (int)$db->lastInsertId();
     

@@ -4,6 +4,9 @@
  * Food Delivery & Real-Time Notification System
  */
 
+// Set Default Timezone for Bangladesh
+date_default_timezone_set('Asia/Dhaka');
+
 // Define application base path if not already defined
 if (!defined('BASE_PATH')) {
     define('BASE_PATH', dirname(__DIR__));

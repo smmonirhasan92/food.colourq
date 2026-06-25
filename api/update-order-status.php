@@ -82,29 +82,31 @@ try {
     $db->beginTransaction();
     
     // Prepare update query (supporting optional delivery_man_id)
+    $now = date('Y-m-d H:i:s');
+    
     if ($deliveryManId) {
         if ($timestampColumn) {
             $updateQuery = "UPDATE orders 
-                            SET status = ?, delivery_man_id = ?, {$timestampColumn} = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP 
+                            SET status = ?, delivery_man_id = ?, {$timestampColumn} = ?, updated_at = ? 
                             WHERE id = ?";
-            $params = [$status, $deliveryManId, $oId];
+            $params = [$status, $deliveryManId, $now, $now, $oId];
         } else {
             $updateQuery = "UPDATE orders 
-                            SET status = ?, delivery_man_id = ?, updated_at = CURRENT_TIMESTAMP 
+                            SET status = ?, delivery_man_id = ?, updated_at = ? 
                             WHERE id = ?";
-            $params = [$status, $deliveryManId, $oId];
+            $params = [$status, $deliveryManId, $now, $oId];
         }
     } else {
         if ($timestampColumn) {
             $updateQuery = "UPDATE orders 
-                            SET status = ?, {$timestampColumn} = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP 
+                            SET status = ?, {$timestampColumn} = ?, updated_at = ? 
                             WHERE id = ?";
-            $params = [$status, $oId];
+            $params = [$status, $now, $now, $oId];
         } else {
             $updateQuery = "UPDATE orders 
-                            SET status = ?, updated_at = CURRENT_TIMESTAMP 
+                            SET status = ?, updated_at = ? 
                             WHERE id = ?";
-            $params = [$status, $oId];
+            $params = [$status, $now, $oId];
         }
     }
     
