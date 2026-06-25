@@ -441,39 +441,33 @@ function initCheckoutPageValidation() {
                     throw new Error(data.message || 'Failed to place order.');
                 }
             } else {
-                // If API returns an error status (like 404 or 500), throw to trigger simulation fallback
-                throw new Error(`API returned HTTP status ${response.status}`);
+                let errorMsg = `API returned HTTP status ${response.status}`;
+                try {
+                    const errData = await response.json();
+                    if (errData && errData.message) {
+                        errorMsg = errData.message;
+                    }
+                } catch (e) { }
+                throw new Error(errorMsg);
             }
 
         } catch (error) {
-            console.warn('[Checkout] Live API failure. Falling back to dynamic simulated checkout flow:', error);
+            console.error('[Checkout] Live API failure:', error);
             
-            // Rich simulated checkout fallback so developer/QA testing remains flawless!
-            if (window.NotificationSystem) {
-                window.NotificationSystem.toast('info', 'Simulator Offline Safe Mode', 'Backend API connection bypassed. Simulating checkout transition.', 4000);
-                if (window.NotificationSystem.synth) {
-                    window.NotificationSystem.synth.playChime('success');
-                }
+            // Restore submit button
+            const submitBtn = checkoutForm.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fa-solid fa-shield-halved"></i> Confirm Order';
             }
 
-            // Simulate database order number generator
-            const randomSuffix = Math.floor(100000 + Math.random() * 900000);
-            const simulatedOrderNumber = `FC-${randomSuffix}-S`;
-
-            // Clear Cart and Redirect
-            setTimeout(() => {
-                // Safely save order number to recent orders list
-                try {
-                    let recentOrders = JSON.parse(localStorage.getItem('food_coloured_recent_orders')) || [];
-                    if (!recentOrders.includes(simulatedOrderNumber)) {
-                        recentOrders.unshift(simulatedOrderNumber);
-                        localStorage.setItem('food_coloured_recent_orders', JSON.stringify(recentOrders.slice(0, 5)));
-                    }
-                } catch(e) { console.warn('LocalStorage restricted on mobile'); }
-
-                window.CartSystem.clearCart();
-                window.location.href = `/customer/order-tracking.php?order_number=${simulatedOrderNumber}&simulate_submit=true`;
-            }, 1800);
+            // Show actual error to the user
+            if (window.NotificationSystem) {
+                window.NotificationSystem.toast('error', 'Checkout Failed', error.message || 'An error occurred while placing your order. Please try again.');
+                if (window.NotificationSystem.synth) {
+                    window.NotificationSystem.synth.playChime('error');
+                }
+            }
         }
     });
 

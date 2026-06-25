@@ -69,11 +69,17 @@ try {
         $username = $user['username']; // Use existing username for consistency
     } else {
         // Create a new guest customer account
-        // Ensure username uniqueness (Optional if email is unique, we will just use the name as is)
-        $checkUser = $db->prepare("SELECT id FROM users WHERE username = ? LIMIT 1");
-        $checkUser->execute([$username]);
-        if ($checkUser->fetch()) {
-            // Keep the name as is for the order ticket, we don't append random suffixes anymore
+        // Ensure username uniqueness to prevent database UNIQUE constraint errors
+        $originalUsername = $username;
+        $counter = 1;
+        while (true) {
+            $checkUser = $db->prepare("SELECT id FROM users WHERE username = ? LIMIT 1");
+            $checkUser->execute([$username]);
+            if (!$checkUser->fetch()) {
+                break; // Unique username found
+            }
+            $username = $originalUsername . ' ' . $counter;
+            $counter++;
         }
         
         // Auto-generate guest password hash
@@ -242,14 +248,16 @@ try {
     // Query admin user id
     $adminStmt = $db->query("SELECT id FROM users WHERE role = 'admin' LIMIT 1");
     $adminRow = $adminStmt->fetch();
-    $adminId = $adminRow ? (int)$adminRow['id'] : 1; // Fallback to 1
     
-    $notificationMsg = "New order {$orderNumber} placed by {$username}. Total: Tk. " . number_format($netTotal, 0) . " (" . strtoupper($paymentMethod) . ")";
-    $insertNotification = $db->prepare("
-        INSERT INTO notifications_log (user_id, order_id, message, is_read) 
-        VALUES (?, ?, ?, 0)
-    ");
-    $insertNotification->execute([$adminId, $orderId, $notificationMsg]);
+    if ($adminRow) {
+        $adminId = (int)$adminRow['id'];
+        $notificationMsg = "New order {$orderNumber} placed by {$username}. Total: Tk. " . number_format($netTotal, 0) . " (" . strtoupper($paymentMethod) . ")";
+        $insertNotification = $db->prepare("
+            INSERT INTO notifications_log (user_id, order_id, message, is_read) 
+            VALUES (?, ?, ?, 0)
+        ");
+        $insertNotification->execute([$adminId, $orderId, $notificationMsg]);
+    }
     
     // Commit transaction
     $db->commit();
