@@ -69,11 +69,11 @@ try {
         $username = $user['username']; // Use existing username for consistency
     } else {
         // Create a new guest customer account
-        // Ensure username uniqueness
+        // Ensure username uniqueness (Optional if email is unique, we will just use the name as is)
         $checkUser = $db->prepare("SELECT id FROM users WHERE username = ? LIMIT 1");
         $checkUser->execute([$username]);
         if ($checkUser->fetch()) {
-            $username = $username . rand(10, 99); // Append suffix if username is taken
+            // Keep the name as is for the order ticket, we don't append random suffixes anymore
         }
         
         // Auto-generate guest password hash
@@ -181,15 +181,10 @@ try {
     }
     
     // Calculate tax, delivery, and discount
-    $tax = $totalPrice * 0.05; // 5% tax
-    // Dynamic delivery fee: 50 if any item requires delivery charge, else 0
-    $deliveryFee = 0.00;
-    foreach ($validatedItems as $vItem) {
-        if (isset($vItem['delivery_charge']) && (int)$vItem['delivery_charge'] > 0) {
-            $deliveryFee = 50.00;
-            break;
-        }
-    }
+    $tax = 0.00; // 0% tax (VAT removed)
+    // Dynamic delivery fee from frontend payload
+    $deliveryFee = isset($input['delivery_fee']) ? (float)$input['delivery_fee'] : 0.00;
+    
     $grossTotal = $totalPrice + $tax + $deliveryFee;
     
     // Check repeat customer loyalty status (has completed/pending/preparing orders)

@@ -18,9 +18,24 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
     <style>
         .pos-layout {
             display: grid;
-            grid-template-columns: 3fr 2fr;
-            gap: 2rem;
+            grid-template-columns: minmax(0, 1fr) 360px;
+            gap: 1.5rem;
             align-items: start;
+        }
+        @media (max-width: 1200px) {
+            .pos-layout {
+                grid-template-columns: minmax(0, 1fr) 320px;
+                gap: 1rem;
+            }
+        }
+        @media (max-width: 992px) {
+            .pos-layout {
+                grid-template-columns: 1fr;
+            }
+            .pos-cart-section {
+                position: relative;
+                top: 0;
+            }
         }
         .pos-menu-section {
             display: flex;

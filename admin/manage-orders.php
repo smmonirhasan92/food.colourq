@@ -1018,9 +1018,10 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                 `;
             }
 
-            const tax = subtotal * 0.05; // 5% tax
-            const deliveryFee = 60.00;
-            const total = parseFloat(order.total_price) || (subtotal + tax + deliveryFee);
+            const tax = 0; // VAT removed
+            const grossTotal = parseFloat(order.total_price) + parseFloat(order.discount_amount || 0);
+            const deliveryFee = Math.max(0, grossTotal - subtotal);
+            const total = parseFloat(order.total_price);
 
             const receiptHtml = `
                 <div class="receipt-wrapper">
@@ -1082,10 +1083,6 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                         <tr>
                             <td>Subtotal:</td>
                             <td style="text-align: right;">Tk. ${subtotal.toFixed(0)}</td>
-                        </tr>
-                        <tr>
-                            <td>VAT (5%):</td>
-                            <td style="text-align: right;">Tk. ${tax.toFixed(0)}</td>
                         </tr>
                         <tr>
                             <td>Delivery Fee:</td>

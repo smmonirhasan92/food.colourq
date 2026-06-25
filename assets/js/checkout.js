@@ -27,10 +27,13 @@ class ShoppingCartManager {
         const deliveryAreaSelect = document.getElementById('delivery-area');
         if (deliveryAreaSelect) {
             deliveryAreaSelect.addEventListener('change', (e) => {
-                if (e.target.value === 'inside_bhairab') {
+                const val = e.target.value;
+                if (val === 'inside_bhairab') {
                     this.standardDeliveryFee = 50;
-                } else if (e.target.value === 'outside_bhairab') {
+                } else if (val === 'outside_bhairab') {
                     this.standardDeliveryFee = 100;
+                } else if (val === 'for_opening') {
+                    this.standardDeliveryFee = 0;
                 } else {
                     this.standardDeliveryFee = 0;
                 }
@@ -369,6 +372,7 @@ function initCheckoutPageValidation() {
             mfs_transaction_id: formData.get('mfs_transaction_id') || null,
             discount_percent: parseFloat(totals.discountPercent) || 0,
             discount_amount: parseFloat(totals.discountAmount) || 0,
+            delivery_fee: parseFloat(totals.deliveryFee) || 0,
             items: cartItems.map(item => ({
                 menu_item_id: item.menu_item_id,
                 variation_id: item.variation_id,
@@ -415,12 +419,14 @@ function initCheckoutPageValidation() {
                     setTimeout(() => {
                         const orderNumber = data.data && data.data.order_number ? data.data.order_number : 'FC-NEW-ORDER';
                         
-                        // Save order number to recent orders list
-                        let recentOrders = JSON.parse(localStorage.getItem('food_coloured_recent_orders')) || [];
-                        if (!recentOrders.includes(orderNumber)) {
-                            recentOrders.unshift(orderNumber);
-                            localStorage.setItem('food_coloured_recent_orders', JSON.stringify(recentOrders.slice(0, 5)));
-                        }
+                        // Safely save order number to recent orders list
+                        try {
+                            let recentOrders = JSON.parse(localStorage.getItem('food_coloured_recent_orders')) || [];
+                            if (!recentOrders.includes(orderNumber)) {
+                                recentOrders.unshift(orderNumber);
+                                localStorage.setItem('food_coloured_recent_orders', JSON.stringify(recentOrders.slice(0, 5)));
+                            }
+                        } catch(e) { console.warn('LocalStorage restricted on mobile'); }
                         
                         window.location.href = `/customer/order-tracking.php?order_number=${orderNumber}`;
                     }, 1800);
@@ -450,12 +456,14 @@ function initCheckoutPageValidation() {
 
             // Clear Cart and Redirect
             setTimeout(() => {
-                // Save order number to recent orders list
-                let recentOrders = JSON.parse(localStorage.getItem('food_coloured_recent_orders')) || [];
-                if (!recentOrders.includes(simulatedOrderNumber)) {
-                    recentOrders.unshift(simulatedOrderNumber);
-                    localStorage.setItem('food_coloured_recent_orders', JSON.stringify(recentOrders.slice(0, 5)));
-                }
+                // Safely save order number to recent orders list
+                try {
+                    let recentOrders = JSON.parse(localStorage.getItem('food_coloured_recent_orders')) || [];
+                    if (!recentOrders.includes(simulatedOrderNumber)) {
+                        recentOrders.unshift(simulatedOrderNumber);
+                        localStorage.setItem('food_coloured_recent_orders', JSON.stringify(recentOrders.slice(0, 5)));
+                    }
+                } catch(e) { console.warn('LocalStorage restricted on mobile'); }
 
                 window.CartSystem.clearCart();
                 window.location.href = `/customer/order-tracking.php?order_number=${simulatedOrderNumber}&simulate_submit=true`;
