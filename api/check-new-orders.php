@@ -56,11 +56,11 @@ try {
     foreach ($newOrders as &$order) {
         $order['id'] = (int)$order['id'];
         $order['total_price'] = (float)$order['total_price'];
-        // Convert created_at (UTC in DB) to Asia/Dhaka ISO 8601 so JS parses correctly
+        // DB stores BD time (PHP uses date_default_timezone_set Asia/Dhaka)
+        // Format as ISO 8601 with +06:00 so JS parses AM/PM correctly
         if (!empty($order['created_at'])) {
-            $dt = new DateTime($order['created_at'], new DateTimeZone('UTC'));
-            $dt->setTimezone(new DateTimeZone('Asia/Dhaka'));
-            $order['created_at'] = $dt->format('c'); // e.g. 2026-06-25T14:10:00+06:00
+            $dt = new DateTime($order['created_at'], new DateTimeZone('Asia/Dhaka'));
+            $order['created_at'] = $dt->format('c'); // "2026-06-25T14:10:00+06:00"
         }
     }
     unset($order); // break reference
