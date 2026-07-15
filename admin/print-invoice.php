@@ -198,10 +198,12 @@ try {
             <span>Gross Subtotal:</span>
             <span>Tk. <?php echo number_format($grossTotal, 0); ?></span>
         </div>
+        <?php if ($order['discount_amount'] > 0): ?>
         <div class="total-row">
-            <span>Discount (<?php echo number_format($order['discount_percent'], 0); ?>%):</span>
+            <span>Discount Amount:</span>
             <span style="color: #000;">- Tk. <?php echo number_format($order['discount_amount'], 0); ?></span>
         </div>
+        <?php endif; ?>
         <div class="total-row grand-total">
             <span>NET TOTAL:</span>
             <span>Tk. <?php echo number_format($order['total_price'], 0); ?></span>

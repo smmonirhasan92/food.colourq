@@ -557,12 +557,18 @@
                 jsonInput.value = JSON.stringify(items);
             }
 
+            const discountRow = document.getElementById('modal-checkout-discount-row');
+            const discountAmtEl = document.getElementById('modal-checkout-discount');
+
             if (totalEl) {
                 if (parseFloat(totals.discountAmount) > 0) {
                     const gross = parseFloat(totals.total) + parseFloat(totals.discountAmount);
                     totalEl.innerHTML = `Tk. ${totals.total} <del style="font-size: 0.9rem; color: var(--text-muted); margin-left: 0.5rem; font-weight: 500;">Tk. ${gross.toFixed(0)}</del>`;
+                    if (discountRow) discountRow.style.display = 'flex';
+                    if (discountAmtEl) discountAmtEl.textContent = `- Tk. ${parseFloat(totals.discountAmount).toFixed(0)}`;
                 } else {
                     totalEl.textContent = `Tk. ${totals.total}`;
+                    if (discountRow) discountRow.style.display = 'none';
                 }
             }
 
@@ -697,6 +703,10 @@
                 <div id="modal-checkout-items-preview" style="max-height: 150px; overflow-y: auto; margin-bottom: 1rem; display: flex; flex-direction: column; gap: 0.75rem; padding-bottom: 0.75rem; border-bottom: 1px dashed var(--border-color);">
                     <!-- Populated via JS -->
                 </div>
+                <div id="modal-checkout-discount-row" style="display: none; justify-content: space-between; font-size: 1.05rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--danger);">
+                    <span>Discount Amount:</span>
+                    <span id="modal-checkout-discount">- Tk. 0</span>
+                </div>
                 <div style="display: flex; justify-content: space-between; font-size: 1.1rem; font-weight: 800; margin-bottom: 1rem; color: var(--text-primary);">
                     <span>Total Bill:</span>
                     <span id="modal-checkout-total" style="color: var(--primary); font-weight: 800; font-family: var(--font-heading);">Tk. 0</span>
@@ -726,7 +736,6 @@
                     <label class="form-label" for="delivery-area">Delivery Area</label>
                     <select class="form-input form-select" name="delivery_area" id="delivery-area" required style="padding: 0.75rem 1rem; background-color: #ffffff;">
                         <option value="" disabled selected>-- Select Delivery Area --</option>
-                        <option value="for_opening">For Opening (Tk. 0)</option>
                         <option value="inside_bhairab">Inside Bhairab Town (Tk. 50)</option>
                         <option value="outside_bhairab">Outside Bhairab Town (Tk. 100)</option>
                     </select>

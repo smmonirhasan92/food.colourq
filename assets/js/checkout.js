@@ -32,8 +32,6 @@ class ShoppingCartManager {
                     this.standardDeliveryFee = 50;
                 } else if (val === 'outside_bhairab') {
                     this.standardDeliveryFee = 100;
-                } else if (val === 'for_opening') {
-                    this.standardDeliveryFee = 0;
                 } else {
                     this.standardDeliveryFee = 0;
                 }
