@@ -31,7 +31,9 @@ $username = !empty($input['customer_name']) ? trim($input['customer_name']) : 'P
 $phone = !empty($input['customer_phone']) ? trim($input['customer_phone']) : 'POS-Counter';
 $email = !empty($input['customer_email']) ? trim($input['customer_email']) : '';
 $items = isset($input['items']) ? $input['items'] : null;
-$discountPercent = isset($input['discount_percent']) ? (float)$input['discount_percent'] : 0.00;
+$discountVal = isset($input['discount_val']) ? (float)$input['discount_val'] : 0.00;
+$discountType = !empty($input['discount_type']) ? trim($input['discount_type']) : 'percent';
+$discountName = !empty($input['discount_name']) ? trim($input['discount_name']) : null;
 $paymentMethod = !empty($input['payment_method']) ? trim($input['payment_method']) : 'cod';
 $mfsSender = !empty($input['mfs_sender_number']) ? trim($input['mfs_sender_number']) : null;
 $mfsTxnId = !empty($input['mfs_transaction_id']) ? trim($input['mfs_transaction_id']) : null;
@@ -39,10 +41,6 @@ $orderStatus = !empty($input['status']) ? trim($input['status']) : 'delivered'; 
 
 if (empty($items) || !is_array($items)) {
     sendJsonResponse(false, "Cart items list must be a non-empty array.", null, 400);
-}
-
-if ($discountPercent < 0 || $discountPercent > 100) {
-    sendJsonResponse(false, "Discount percentage must be between 0 and 100.", null, 400);
 }
 
 try {
@@ -164,7 +162,21 @@ try {
     }
     
     // Calculate discount details
-    $discountAmount = $grossTotal * ($discountPercent / 100);
+    $discountAmount = 0.00;
+    $discountPercent = 0.00;
+    
+    if ($discountType === 'percent') {
+        $discountPercent = $discountVal;
+        $discountAmount = $grossTotal * ($discountPercent / 100);
+    } else {
+        $discountAmount = $discountVal;
+        $discountPercent = ($grossTotal > 0) ? ($discountAmount / $grossTotal) * 100 : 0;
+    }
+    
+    if ($discountAmount > $grossTotal) {
+        $discountAmount = $grossTotal;
+    }
+    
     $netTotal = $grossTotal - $discountAmount;
     
     // 3. Generate Unique POS Order Number (Format: CF-XX)
@@ -193,13 +205,14 @@ try {
     $insertOrder = $db->prepare("
         INSERT INTO orders (
             user_id, order_number, total_price, status, delivery_address, 
-            phone, is_notified, order_type, discount_percent, discount_amount, 
-            mfs_sender_number, mfs_transaction_id, created_at
-        ) VALUES (?, ?, ?, ?, 'POS Counter', ?, 1, 'pos', ?, ?, ?, ?, ?)
+            phone, is_notified, order_type, discount_percent, discount_amount, discount_name,
+            payment_method, mfs_sender_number, mfs_transaction_id, created_at
+        ) VALUES (?, ?, ?, ?, 'POS Counter', ?, 1, 'pos', ?, ?, ?, ?, ?, ?, ?)
     ");
     $insertOrder->execute([
         $userId, $orderNumber, $netTotal, $orderStatus, $phone, 
-        $discountPercent, $discountAmount, $mfsSender, $mfsTxnId, $now
+        $discountPercent, $discountAmount, $discountName,
+        $paymentMethod, $mfsSender, $mfsTxnId, $now
     ]);
     $orderId = (int)$db->lastInsertId();
     

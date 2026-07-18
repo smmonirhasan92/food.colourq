@@ -19,9 +19,9 @@ try {
     
     // Fetch order details
     $orderStmt = $db->prepare("
-        SELECT o.id, o.order_number, o.total_price, o.discount_percent, o.discount_amount, 
-               o.payment_method, o.created_at, o.phone as customer_phone, o.order_type, 
-               u.username as customer_name
+        SELECT o.id, o.order_number, o.total_price, o.discount_percent, o.discount_amount,
+               o.discount_name, o.payment_method, o.created_at, o.phone as customer_phone,
+               o.order_type, u.username as customer_name
         FROM orders o
         JOIN users u ON o.user_id = u.id
         WHERE o.order_number = ? 
@@ -200,7 +200,7 @@ try {
         </div>
         <?php if ($order['discount_amount'] > 0): ?>
         <div class="total-row">
-            <span>Discount Amount:</span>
+            <span><?php echo !empty($order['discount_name']) ? htmlspecialchars($order['discount_name']) : 'Discount'; ?>:</span>
             <span style="color: #000;">- Tk. <?php echo number_format($order['discount_amount'], 0); ?></span>
         </div>
         <?php endif; ?>

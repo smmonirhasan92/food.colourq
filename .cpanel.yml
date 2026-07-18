@@ -1,4 +1,5 @@
 ---
 deployment:
   tasks:
-    - /bin/echo "Deploying files in place..."
+    - export DEPLOYPATH=/home/crispybd/public_html/
+    - /bin/cp -R * $DEPLOYPATH

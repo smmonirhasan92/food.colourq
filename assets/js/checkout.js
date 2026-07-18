@@ -12,7 +12,9 @@ class ShoppingCartManager {
         this.items = this.loadCart();
         this.standardDeliveryFee = 0; // Dynamically set from checkout form
         this.taxRate = 0; // 0% VAT
-        this.loyaltyDiscountPercent = 0; // Dynamic loyalty discount percent!
+        this.couponCode = null;
+        this.couponDiscountType = null;
+        this.couponDiscountValue = 0;
         this.init();
     }
 
@@ -189,22 +191,30 @@ class ShoppingCartManager {
         
         let deliveryFee = subtotal > 0 ? this.standardDeliveryFee : 0;
         
-        // Free Delivery for orders >= 390
-        if (subtotal >= 390) {
-            deliveryFee = 0;
-        }
-
         const gross = subtotal > 0 ? (subtotal + tax + deliveryFee) : 0;
-        const discountAmount = gross * (this.loyaltyDiscountPercent / 100);
+
+        let discountAmount = 0;
+        if (this.couponCode) {
+            if (this.couponDiscountType === 'percent') {
+                discountAmount = gross * (this.couponDiscountValue / 100);
+            } else {
+                discountAmount = this.couponDiscountValue;
+            }
+            if (discountAmount > gross) {
+                discountAmount = gross;
+            }
+        }
+        
         const total = gross - discountAmount;
 
         return {
             subtotal: subtotal.toFixed(0),
             tax: tax.toFixed(0),
             deliveryFee: deliveryFee.toFixed(0),
-            discountPercent: this.loyaltyDiscountPercent,
+            gross: gross.toFixed(0),
             discountAmount: discountAmount.toFixed(0),
-            total: total.toFixed(0)
+            total: total.toFixed(0),
+            count: this.items.reduce((sum, i) => sum + i.quantity, 0)
         };
     }
 
@@ -363,7 +373,7 @@ function initCheckoutPageValidation() {
         const cleanPhone = phone.replace(/[^0-9]/g, '') || Date.now().toString();
         const dummyEmail = `${cleanPhone}@crispybd.com`;
 
-        const totals = window.CartSystem ? window.CartSystem.getTotals() : { discountPercent: 0, discountAmount: 0 };
+        const totals = window.CartSystem ? window.CartSystem.getTotals() : { discountAmount: 0, deliveryFee: 0 };
         const payload = {
             customer_name: formData.get('customer_name'),
             username: formData.get('customer_name'),
@@ -374,8 +384,8 @@ function initCheckoutPageValidation() {
             payment_method: formData.get('payment_method'),
             mfs_sender_number: formData.get('mfs_sender_number') || null,
             mfs_transaction_id: formData.get('mfs_transaction_id') || null,
-            discount_percent: parseFloat(totals.discountPercent) || 0,
             discount_amount: parseFloat(totals.discountAmount) || 0,
+            coupon_code: window.CartSystem && window.CartSystem.couponCode ? window.CartSystem.couponCode : null,
             delivery_fee: parseFloat(totals.deliveryFee) || 0,
             items: cartItems.map(item => ({
                 menu_item_id: item.menu_item_id,
@@ -418,6 +428,10 @@ function initCheckoutPageValidation() {
 
                     // Clear cart storage and updates
                     window.CartSystem.clearCart();
+                    // Also reset coupon state
+                    window.CartSystem.couponCode = null;
+                    window.CartSystem.couponDiscountType = null;
+                    window.CartSystem.couponDiscountValue = 0;
 
                     // Elegant delayed transition
                     setTimeout(() => {
@@ -469,59 +483,63 @@ function initCheckoutPageValidation() {
         }
     });
 
-    // Setup phone field change listener for loyalty check
-    const phoneField = document.getElementById('cust-phone');
-    const loyaltyStatus = document.getElementById('checkout-loyalty-status');
-    let loyaltyDebounce;
+    // Coupon application logic
+    const applyCouponBtn = document.getElementById('apply-coupon-btn');
+    const couponInput = document.getElementById('coupon-code-input');
+    const couponMessage = document.getElementById('coupon-message');
 
-    if (phoneField && loyaltyStatus) {
-        const checkPhoneLoyalty = () => {
-            const phoneVal = phoneField.value.trim();
-            if (phoneVal.length < 5) {
-                loyaltyStatus.innerHTML = '';
-                if (window.CartSystem && window.CartSystem.loyaltyDiscountPercent > 0) {
-                    window.CartSystem.loyaltyDiscountPercent = 0;
-                    window.CartSystem.saveCart();
-                }
+    if (applyCouponBtn && couponInput) {
+        applyCouponBtn.addEventListener('click', async () => {
+            const code = couponInput.value.trim().toUpperCase();
+            if (!code) {
+                couponMessage.innerHTML = '<span style="color: var(--danger);">Please enter a coupon code.</span>';
                 return;
             }
-
-            clearTimeout(loyaltyDebounce);
-            loyaltyDebounce = setTimeout(async () => {
-                try {
-                    const response = await fetch(`../api/check-customer.php?phone=${encodeURIComponent(phoneVal)}`);
-                    const result = await response.json();
-                    
-                    if (result.success && result.data && result.data.exists && result.data.order_count > 0) {
-                        loyaltyStatus.innerHTML = `<span style="color: var(--success);"><i class="fa-solid fa-crown"></i> Loyal Customer (${result.data.order_count} past orders). 5% discount applied!</span>`;
-                        if (window.CartSystem) {
-                            window.CartSystem.loyaltyDiscountPercent = 5;
-                            window.CartSystem.saveCart();
-                        }
-                    } else {
-                        loyaltyStatus.innerHTML = '';
-                        if (window.CartSystem && window.CartSystem.loyaltyDiscountPercent > 0) {
-                            window.CartSystem.loyaltyDiscountPercent = 0;
-                            window.CartSystem.saveCart();
+            
+            applyCouponBtn.disabled = true;
+            applyCouponBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+            
+            try {
+                const response = await fetch('../api/validate-coupon.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code: code })
+                });
+                const result = await response.json();
+                
+                if (result.success) {
+                    couponMessage.innerHTML = '<span style="color: var(--success);"><i class="fa-solid fa-check"></i> ' + result.message + '</span>';
+                    if (window.CartSystem) {
+                        window.CartSystem.couponCode = code;
+                        window.CartSystem.couponDiscountType = result.data.type;
+                        window.CartSystem.couponDiscountValue = result.data.value;
+                        window.CartSystem.saveCart();
+                        
+                        // Force re-render of modal totals
+                        if (typeof renderModalCheckoutSummary === 'function') {
+                            renderModalCheckoutSummary();
                         }
                     }
-                } catch (e) {
-                    console.error('Loyalty check error:', e);
+                } else {
+                    couponMessage.innerHTML = '<span style="color: var(--danger);"><i class="fa-solid fa-triangle-exclamation"></i> ' + result.message + '</span>';
+                    if (window.CartSystem) {
+                        window.CartSystem.couponCode = null;
+                        window.CartSystem.couponDiscountType = null;
+                        window.CartSystem.couponDiscountValue = 0;
+                        window.CartSystem.saveCart();
+                        if (typeof renderModalCheckoutSummary === 'function') {
+                            renderModalCheckoutSummary();
+                        }
+                    }
                 }
-            }, 500);
-        };
-
-        phoneField.addEventListener('input', checkPhoneLoyalty);
-        
-        // Listen to custom Auth events or run prefill check
-        document.addEventListener('auth:prefilled', checkPhoneLoyalty);
-        
-        // Run check once if prefilled on page load
-        if (phoneField.value) {
-            setTimeout(checkPhoneLoyalty, 600);
-        }
+            } catch (err) {
+                couponMessage.innerHTML = '<span style="color: var(--danger);">Error connecting to server.</span>';
+            } finally {
+                applyCouponBtn.disabled = false;
+                applyCouponBtn.innerHTML = 'Apply';
+            }
+        });
     }
-}
 
 /**
  * ==========================================================================

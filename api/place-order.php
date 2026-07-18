@@ -193,15 +193,34 @@ try {
     
     $grossTotal = $totalPrice + $tax + $deliveryFee;
     
-    // Check repeat customer loyalty status (has completed/pending/preparing orders)
-    $stmtCheck = $db->prepare("SELECT COUNT(id) FROM orders WHERE phone = ? LIMIT 1");
-    $stmtCheck->execute([$phone]);
-    $pastOrdersCount = (int)$stmtCheck->fetchColumn();
+    // Check for applied coupon
+    $couponCode = isset($input['coupon_code']) ? trim($input['coupon_code']) : null;
+    $discountName = null;
     
-    if ($pastOrdersCount > 0) {
-        $discountPercent = 5.00;
-        $discountAmount = $grossTotal * 0.05;
+    if ($couponCode) {
+        $stmtCoupon = $db->prepare("SELECT discount_type, discount_value FROM coupons WHERE code = ? AND is_active = 1 LIMIT 1");
+        $stmtCoupon->execute([$couponCode]);
+        $coupon = $stmtCoupon->fetch();
+        
+        if ($coupon) {
+            $discountName = "Coupon: " . $couponCode;
+            if ($coupon['discount_type'] === 'percent') {
+                $discountPercent = (float)$coupon['discount_value'];
+                $discountAmount = $grossTotal * ($discountPercent / 100);
+            } else {
+                $discountAmount = (float)$coupon['discount_value'];
+                $discountPercent = 0.00;
+                if ($discountAmount > $grossTotal) {
+                    $discountAmount = $grossTotal;
+                }
+            }
+        } else {
+            // Invalid coupon, ignore or send error (we'll just ignore and set 0)
+            $discountPercent = 0.00;
+            $discountAmount = 0.00;
+        }
     } else {
+        // No coupon applied
         $discountPercent = 0.00;
         $discountAmount = 0.00;
     }
@@ -217,13 +236,13 @@ try {
     $insertOrder = $db->prepare("
         INSERT INTO orders (
             user_id, order_number, total_price, status, delivery_address, 
-            phone, is_notified, order_type, discount_percent, discount_amount, 
+            phone, is_notified, order_type, discount_percent, discount_amount, discount_name,
             payment_method, mfs_sender_number, mfs_transaction_id, created_at
-        ) VALUES (?, ?, ?, 'pending', ?, ?, 0, 'online', ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, 'pending', ?, ?, 0, 'online', ?, ?, ?, ?, ?, ?, ?)
     ");
     $insertOrder->execute([
         $userId, $orderNumber, $netTotal, $deliveryAddress, 
-        $phone, $discountPercent, $discountAmount,
+        $phone, $discountPercent, $discountAmount, $discountName,
         $paymentMethod, $mfsSenderNumber, $mfsTransactionId, $now
     ]);
     $orderId = (int)$db->lastInsertId();

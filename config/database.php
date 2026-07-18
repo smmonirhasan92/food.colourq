@@ -259,15 +259,20 @@ class Database {
                 }
 
 
-                // Ensure POS and MFS payment columns exist on orders table in SQLite
-                if (!in_array('order_type', $colCheck)) {
+                $colsQueryPos = $db->query("PRAGMA table_info(orders)")->fetchAll(PDO::FETCH_COLUMN, 1);
+                if (!in_array('order_type', $colsQueryPos)) {
                     $db->exec("ALTER TABLE orders ADD COLUMN order_type VARCHAR(20) DEFAULT 'online'");
                 }
+                
+                $colCheck = $db->query("PRAGMA table_info(orders)")->fetchAll(PDO::FETCH_COLUMN, 1);
                 if (!in_array('discount_percent', $colCheck)) {
                     $db->exec("ALTER TABLE orders ADD COLUMN discount_percent DECIMAL(5, 2) DEFAULT 0.00");
                 }
                 if (!in_array('discount_amount', $colCheck)) {
                     $db->exec("ALTER TABLE orders ADD COLUMN discount_amount DECIMAL(10, 2) DEFAULT 0.00");
+                }
+                if (!in_array('discount_name', $colCheck)) {
+                    $db->exec("ALTER TABLE orders ADD COLUMN discount_name VARCHAR(100) NULL");
                 }
                 if (!in_array('mfs_sender_number', $colCheck)) {
                     $db->exec("ALTER TABLE orders ADD COLUMN mfs_sender_number VARCHAR(20) NULL");
@@ -315,6 +320,16 @@ class Database {
                 if (!in_array('variation_name', $colCheckOrderItems)) {
                     $db->exec("ALTER TABLE order_items ADD COLUMN variation_name VARCHAR(100) NULL");
                 }
+
+                // Ensure coupons table exists (SQLite)
+                $db->exec("CREATE TABLE IF NOT EXISTS coupons (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    code VARCHAR(50) NOT NULL UNIQUE,
+                    discount_type VARCHAR(20) DEFAULT 'fixed',
+                    discount_value DECIMAL(10, 2) NOT NULL,
+                    is_active TINYINT DEFAULT 1,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )");
             } else {
                 // MySQL Migrations
                 $db->exec("CREATE TABLE IF NOT EXISTS delivery_men (
@@ -364,6 +379,7 @@ class Database {
                     $db->exec("ALTER TABLE orders ADD COLUMN order_type VARCHAR(20) DEFAULT 'online',
                                ADD COLUMN discount_percent DECIMAL(5, 2) DEFAULT 0.00,
                                ADD COLUMN discount_amount DECIMAL(10, 2) DEFAULT 0.00,
+                               ADD COLUMN discount_name VARCHAR(100) NULL,
                                ADD COLUMN mfs_sender_number VARCHAR(20) NULL,
                                ADD COLUMN mfs_transaction_id VARCHAR(50) NULL,
                                ADD COLUMN payment_method VARCHAR(30) DEFAULT 'cod'");
@@ -371,6 +387,10 @@ class Database {
                     $colsQueryPay = $db->query("SHOW COLUMNS FROM orders LIKE 'payment_method'");
                     if (!$colsQueryPay->fetch()) {
                         $db->exec("ALTER TABLE orders ADD COLUMN payment_method VARCHAR(30) DEFAULT 'cod'");
+                    }
+                    $colsQueryDiscName = $db->query("SHOW COLUMNS FROM orders LIKE 'discount_name'");
+                    if (!$colsQueryDiscName->fetch()) {
+                        $db->exec("ALTER TABLE orders ADD COLUMN discount_name VARCHAR(100) NULL");
                     }
                 }
                 
@@ -406,6 +426,16 @@ class Database {
                 if (!$colsQueryVarId->fetch()) {
                     $db->exec("ALTER TABLE order_items ADD COLUMN variation_id INT NULL, ADD COLUMN variation_name VARCHAR(100) NULL");
                 }
+
+                // Ensure coupons table exists (MySQL)
+                $db->exec("CREATE TABLE IF NOT EXISTS coupons (
+                    id INT PRIMARY KEY AUTO_INCREMENT,
+                    code VARCHAR(50) NOT NULL UNIQUE,
+                    discount_type VARCHAR(20) DEFAULT 'fixed',
+                    discount_value DECIMAL(10, 2) NOT NULL,
+                    is_active TINYINT DEFAULT 1,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )");
             }
         } catch (Exception $e) {
             error_log("Database auto-migration warning: " . $e->getMessage());

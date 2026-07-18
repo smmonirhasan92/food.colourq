@@ -409,9 +409,22 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                                         <option value="card">Card Terminal</option>
                                     </select>
                                 </div>
+                                <div class="form-group" style="margin-bottom: 0; display: flex; gap: 0.5rem;">
+                                    <div style="flex: 1;">
+                                        <label class="form-label" for="pos-discount">Discount</label>
+                                        <input class="form-input" type="number" id="pos-discount" min="0" value="0" oninput="calculateBillingTotals()">
+                                    </div>
+                                    <div style="width: 80px;">
+                                        <label class="form-label" for="pos-discount-type">Type</label>
+                                        <select class="form-input form-select" id="pos-discount-type" onchange="calculateBillingTotals()" style="padding: 0.75rem 0.5rem;">
+                                            <option value="flat">Tk</option>
+                                            <option value="percent">%</option>
+                                        </select>
+                                    </div>
+                                </div>
                                 <div class="form-group" style="margin-bottom: 0;">
-                                    <label class="form-label" for="pos-discount">Discount (%)</label>
-                                    <input class="form-input" type="number" id="pos-discount" min="0" max="100" value="0" oninput="calculateBillingTotals()">
+                                    <label class="form-label" for="pos-discount-name">Discount Reason/Name</label>
+                                    <input class="form-input" type="text" id="pos-discount-name" placeholder="e.g. Special Guest">
                                 </div>
                             </div>
 
@@ -721,8 +734,17 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                 gross += (item.price * item.quantity);
             });
 
-            const discountPercent = parseFloat(document.getElementById('pos-discount').value) || 0;
-            const discountAmt = gross * (discountPercent / 100);
+            const discountVal = parseFloat(document.getElementById('pos-discount').value) || 0;
+            const discountType = document.getElementById('pos-discount-type').value;
+            
+            let discountAmt = 0;
+            if (discountType === 'percent') {
+                discountAmt = gross * (discountVal / 100);
+            } else {
+                discountAmt = discountVal;
+            }
+            if (discountAmt > gross) discountAmt = gross;
+
             const net = gross - discountAmt;
 
             document.getElementById('bill-gross').textContent = `Tk. ${gross.toLocaleString()}`;
@@ -767,15 +789,9 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                                     <i class="fa-solid fa-crown"></i> Loyal Customer (${cust.order_count} Past Orders)
                                 </div>
                             `;
-                            // Auto-apply a 5% loyalty discount suggestion as reference
+                            // Auto-apply logic removed
                             const discountInput = document.getElementById('pos-discount');
-                            if (discountInput && parseInt(discountInput.value) === 0) {
-                                discountInput.value = 5;
-                                calculateBillingTotals();
-                                if (window.NotificationSystem) {
-                                    window.NotificationSystem.toast('info', 'Discount Suggestion', 'Applied 5% loyal customer discount recommendation.');
-                                }
-                            }
+                            // We don't automatically set 5% anymore
                         }
                         
                         indicator.innerHTML = badgeHtml;
@@ -811,15 +827,20 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
                 return;
             }
 
+            const discountVal = parseFloat(document.getElementById('pos-discount').value) || 0;
+            const discountType = document.getElementById('pos-discount-type').value;
+            const discountName = document.getElementById('pos-discount-name').value.trim() || null;
+            
             const payload = {
-                customer_phone: phone,
                 customer_name: name,
-                items: posCart,
-                discount_percent: discountPercent,
+                customer_phone: phone,
                 payment_method: paymentMethod,
-                mfs_sender_number: mfsPhone || null,
-                mfs_transaction_id: mfsTxn || null,
-                status: 'delivered' // Auto-deliver POS orders
+                mfs_sender_number: mfsPhone,
+                mfs_transaction_id: mfsTxn,
+                discount_val: discountVal,
+                discount_type: discountType,
+                discount_name: discountName,
+                cart: posCart
             };
 
             try {

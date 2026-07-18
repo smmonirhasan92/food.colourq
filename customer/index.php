@@ -564,7 +564,14 @@
                 if (parseFloat(totals.discountAmount) > 0) {
                     const gross = parseFloat(totals.total) + parseFloat(totals.discountAmount);
                     totalEl.innerHTML = `Tk. ${totals.total} <del style="font-size: 0.9rem; color: var(--text-muted); margin-left: 0.5rem; font-weight: 500;">Tk. ${gross.toFixed(0)}</del>`;
-                    if (discountRow) discountRow.style.display = 'flex';
+                    if (discountRow) {
+                        discountRow.style.display = 'flex';
+                        let reason = 'Discount Amount:';
+                        if (window.CartSystem && window.CartSystem.couponCode) {
+                            reason = `Coupon (${window.CartSystem.couponCode}):`;
+                        }
+                        discountRow.querySelector('span:first-child').textContent = reason;
+                    }
                     if (discountAmtEl) discountAmtEl.textContent = `- Tk. ${parseFloat(totals.discountAmount).toFixed(0)}`;
                 } else {
                     totalEl.textContent = `Tk. ${totals.total}`;
@@ -712,9 +719,16 @@
                     <span id="modal-checkout-total" style="color: var(--primary); font-weight: 800; font-family: var(--font-heading);">Tk. 0</span>
                 </div>
 
-                <div style="background: rgba(16, 185, 129, 0.1); border: 1px dashed rgba(16, 185, 129, 0.4); border-radius: var(--radius-sm); padding: 0.75rem; margin-bottom: 1.5rem; color: #10b981; font-weight: 700; text-align: center; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
-                    <i class="fa-solid fa-gift" style="font-size: 1.1rem;"></i> Order Tk 390 Get Free-0
+                <!-- Coupon Section -->
+                <div style="margin-bottom: 1.5rem;">
+                    <label class="form-label">Apply Coupon</label>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input type="text" id="coupon-code-input" class="form-input" placeholder="Enter coupon code" style="text-transform: uppercase;">
+                        <button type="button" class="btn btn-secondary" id="apply-coupon-btn" style="white-space: nowrap;">Apply</button>
+                    </div>
+                    <div id="coupon-message" style="font-size: 0.85rem; margin-top: 0.5rem;"></div>
                 </div>
+
 
                 <h4 style="font-size: 1.1rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; color: var(--text-primary);">
                     <i class="fa-solid fa-truck" style="color: var(--primary);"></i> Delivery Details
