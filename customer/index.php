@@ -178,7 +178,8 @@
     <script src="../assets/js/main.js"></script>
     <script src="../assets/js/notifications.js"></script>
     <script src="../assets/js/animations.js"></script>
-    <script src="../assets/js/checkout.js"></script>
+    <!-- Checkout Handling (Version updated to clear browser cache) -->
+    <script src="../assets/js/checkout.js?v=2.0"></script>
 
     <script>
         // Helper to optimize Unsplash images for storefront speed
