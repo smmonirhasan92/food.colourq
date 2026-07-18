@@ -541,6 +541,8 @@ function initCheckoutPageValidation() {
         });
     }
 
+} // End of initCheckoutModal
+
 /**
  * ==========================================================================
  * CUSTOMER LOGIN & AUTHENTICATION SYSTEMS (PHONE-ONLY LOGINS)
